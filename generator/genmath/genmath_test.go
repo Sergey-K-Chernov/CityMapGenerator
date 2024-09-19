@@ -1,4 +1,4 @@
-package main
+package genmath
 
 import (
 	"math"
@@ -51,7 +51,7 @@ func TestAlmostEqual(t *testing.T) {
 		true}
 
 	for i := 0; i < len(answers); i++ {
-		answer := almostEqual(vals1[i], vals2[i], thres[i])
+		answer := AlmostEqual(vals1[i], vals2[i], thres[i])
 		if answer != answers[i] {
 			t.Fatalf(`%d: %t != %t`, i, answer, answers[i])
 		}
@@ -80,8 +80,8 @@ func TestDegToRad(t *testing.T) {
 		2 * math.Pi}
 
 	for i := 0; i < len(vals); i++ {
-		answer := degToRad(vals[i])
-		if !almostEqual(answer, answers[i], 0.000001) {
+		answer := DegToRad(vals[i])
+		if !AlmostEqual(answer, answers[i], 0.000001) {
 			t.Fatalf(`%d: %f != %f`, i, answer, answers[i])
 		}
 	}

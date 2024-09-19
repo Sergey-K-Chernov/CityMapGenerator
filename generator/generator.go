@@ -3,49 +3,28 @@ package main
 import (
 	"fmt"
 	"math"
-	"math/rand"
+
+	"chirrwick.com/projects/city/generator/genmath"
 )
 
-func almostEqual(a, b, threshold float64) bool {
-	return math.Abs(a-b) <= threshold
+func generateRadialRandomPoint(angle_min, angle_max, radius_min, raduis_max float64) genmath.Point {
+	angle := genmath.RandFloat(angle_min, angle_max)
+	radius := genmath.RandFloat(radius_min, raduis_max)
+
+	return genmath.Point{radius * math.Cos(angle), radius * math.Sin(angle)}
 }
 
-func degToRad(value float64) float64 {
-	return value * math.Pi / 180.
-}
-
-func randFloat(min, max float64) float64 {
-	return min + (max-min)*rand.Float64()
-}
-
-type Point struct {
-	X float64
-	Y float64
-}
-
-func (p1 *Point) Add(p2 Point) {
-	p1.X += p2.X
-	p1.Y += p2.Y
-}
-
-func generateRadialRandomPoint(angle_min, angle_max, radius_min, raduis_max float64) Point {
-	angle := randFloat(angle_min, angle_max)
-	radius := randFloat(radius_min, raduis_max)
-
-	return Point{radius * math.Cos(angle), radius * math.Sin(angle)}
-}
-
-func generateBorders(n_points int, size_rough_min, size_rough_max float64) {
-	angle_step := degToRad(360. / float64(n_points))
+func GenerateBorders(n_points int, size_rough_min, size_rough_max float64) {
+	angle_step := genmath.DegToRad(360. / float64(n_points))
 	angle_variation := angle_step / 2
 
-	points := make([]Point, n_points)
+	points := make([]genmath.Point, n_points)
 
 	for i := 0; i < n_points; i++ {
 		angle := angle_step * float64(i)
 		points[i] = generateRadialRandomPoint(angle-angle_variation, angle+angle_variation, size_rough_min/2, size_rough_max/2)
-		point := generateRadialRandomPoint(0, 2*math.Pi, 0, (size_rough_min+size_rough_max)/20.0)
 
+		point := generateRadialRandomPoint(0, 2*math.Pi, 0, (size_rough_min+size_rough_max)/20.0)
 		points[i].Add(point)
 
 		fmt.Printf("%7.1f\t%7.1f\n", points[i].X, points[i].Y)
@@ -53,5 +32,5 @@ func generateBorders(n_points int, size_rough_min, size_rough_max float64) {
 }
 
 func main() {
-	generateBorders(6, 2000., 3000.)
+	GenerateBorders(6, 2000., 3000.)
 }
