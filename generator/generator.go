@@ -14,13 +14,13 @@ func degToRad(value float64) float64 {
 	return value * math.Pi / 180.
 }
 
+func randFloat(min, max float64) float64 {
+	return min + (max-min)*rand.Float64()
+}
+
 type Point struct {
 	X float64
 	Y float64
-}
-
-func randFloat(min, max float64) float64 {
-	return min + (max-min)*rand.Float64()
 }
 
 func generateRadialRandomPoint(angle_min, angle_max, radius_min, raduis_max float64) Point {
