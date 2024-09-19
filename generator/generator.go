@@ -11,7 +11,10 @@ func generateRadialRandomPoint(angle_min, angle_max, radius_min, raduis_max floa
 	angle := genmath.RandFloat(angle_min, angle_max)
 	radius := genmath.RandFloat(radius_min, raduis_max)
 
-	return genmath.Point{radius * math.Cos(angle), radius * math.Sin(angle)}
+	var res genmath.Point
+	res.X = radius * math.Cos(angle)
+	res.Y = radius * math.Sin(angle)
+	return res
 }
 
 func GenerateBorders(n_points int, size_rough_min, size_rough_max float64) {
