@@ -23,6 +23,11 @@ type Point struct {
 	Y float64
 }
 
+func (p1 *Point) Add(p2 Point) {
+	p1.X += p2.X
+	p1.Y += p2.Y
+}
+
 func generateRadialRandomPoint(angle_min, angle_max, radius_min, raduis_max float64) Point {
 	angle := randFloat(angle_min, angle_max)
 	radius := randFloat(radius_min, raduis_max)
@@ -39,6 +44,9 @@ func generateBorders(n_points int, size_rough_min, size_rough_max float64) {
 	for i := 0; i < n_points; i++ {
 		angle := angle_step * float64(i)
 		points[i] = generateRadialRandomPoint(angle-angle_variation, angle+angle_variation, size_rough_min/2, size_rough_max/2)
+		point := generateRadialRandomPoint(0, 2*math.Pi, 0, (size_rough_min+size_rough_max)/20.0)
+
+		points[i].Add(point)
 
 		fmt.Printf("%7.1f\t%7.1f\n", points[i].X, points[i].Y)
 	}
