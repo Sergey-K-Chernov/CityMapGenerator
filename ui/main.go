@@ -31,13 +31,6 @@ type Dims = layout.Dimensions
 func main() {
 	chan_map := make(chan generator.Map)
 
-	initials := generator.InitialValues{
-		Raduis:      generator.Range{Min: 2000., Max: 3000.},
-		NumSides:    6,
-		VertexShift: 300.0}
-
-	go generator.GenerateBorders(chan_map, initials)
-
 	go startGui(chan_map)
 
 	app.Main()
@@ -57,23 +50,21 @@ func startGui(chan_map chan generator.Map) {
 
 var uiShift int = 200
 
+type uiLayout struct {
+	minRadius widget.Editor
+	maxRadius widget.Editor
+	nPoints   widget.Editor
+	//	pointVariation widget.Editor
+
+	btnGenerate widget.Clickable
+}
+
 func run(window *app.Window, chan_map chan generator.Map) error {
 	theme := material.NewTheme()
 
 	var ops op.Ops
-	var generateButton widget.Clickable
 
-	var numSideInput widget.Editor
-	numSideInput.SingleLine = true
-	numSideInput.Alignment = text.End
-
-	var minRadiusInput widget.Editor
-	minRadiusInput.SingleLine = true
-	minRadiusInput.Alignment = text.End
-
-	var maxRadiusInput widget.Editor
-	maxRadiusInput.SingleLine = true
-	maxRadiusInput.Alignment = text.End
+	lay := initWidgets()
 
 	for {
 		switch e := window.Event().(type) {
@@ -84,159 +75,8 @@ func run(window *app.Window, chan_map chan generator.Map) error {
 			// This graphics context is used for managing the rendering state
 			gtx := app.NewContext(&ops, e)
 
-			if generateButton.Clicked(gtx) {
-				var initials generator.InitialValues
-
-				inputString := numSideInput.Text()
-				inputString = strings.TrimSpace(inputString)
-				nSides, _ := strconv.ParseInt(inputString, 10, 32)
-				if nSides == 0 {
-					nSides = 6
-				}
-				initials.NumSides = int(nSides)
-
-				inputString = minRadiusInput.Text()
-				inputString = strings.TrimSpace(inputString)
-				initials.Raduis.Min, _ = strconv.ParseFloat(inputString, 32)
-				if initials.Raduis.Min <= 0 {
-					initials.Raduis.Min = 2000.
-				}
-
-				inputString = maxRadiusInput.Text()
-				inputString = strings.TrimSpace(inputString)
-				initials.Raduis.Max, _ = strconv.ParseFloat(inputString, 32)
-				if initials.Raduis.Max <= 0 {
-					initials.Raduis.Max = 3000.
-				}
-
-				go generator.GenerateBorders(chan_map, initials)
-			}
-
-			layout.Flex{
-				Axis:    layout.Vertical,
-				Spacing: layout.SpaceEnd,
-			}.Layout(gtx,
-				layout.Rigid(
-					func(gtx GC) Dims {
-						title := material.H6(theme, "Corners:")
-						title.Alignment = text.Start
-
-						return title.Layout(gtx)
-					},
-				),
-
-				layout.Rigid(
-					func(gtx GC) Dims {
-						ed := material.Editor(theme, &numSideInput, "6")
-
-						margins := layout.Inset{
-							Top:    unit.Dp(4),
-							Right:  unit.Dp(705),
-							Bottom: unit.Dp(10),
-							Left:   unit.Dp(35),
-						}
-
-						border := widget.Border{
-							Color:        color.NRGBA{R: 204, G: 204, B: 204, A: 255},
-							CornerRadius: unit.Dp(3),
-							Width:        unit.Dp(2),
-						}
-
-						return margins.Layout(gtx,
-							func(gtx GC) Dims {
-								return border.Layout(gtx, ed.Layout)
-							},
-						)
-					},
-				),
-
-				layout.Rigid(
-					func(gtx GC) Dims {
-						title := material.H6(theme, "Radius min:")
-						title.Alignment = text.Start
-
-						return title.Layout(gtx)
-					},
-				),
-
-				layout.Rigid(
-					func(gtx GC) Dims {
-						ed := material.Editor(theme, &minRadiusInput, "2000")
-
-						margins := layout.Inset{
-							Top:    unit.Dp(4),
-							Right:  unit.Dp(705),
-							Bottom: unit.Dp(10),
-							Left:   unit.Dp(35),
-						}
-
-						border := widget.Border{
-							Color:        color.NRGBA{R: 204, G: 204, B: 204, A: 255},
-							CornerRadius: unit.Dp(3),
-							Width:        unit.Dp(2),
-						}
-
-						return margins.Layout(gtx,
-							func(gtx GC) Dims {
-								return border.Layout(gtx, ed.Layout)
-							},
-						)
-					},
-				),
-
-				layout.Rigid(
-					func(gtx GC) Dims {
-						title := material.H6(theme, "Radius max:")
-						title.Alignment = text.Start
-
-						return title.Layout(gtx)
-					},
-				),
-
-				layout.Rigid(
-					func(gtx GC) Dims {
-						ed := material.Editor(theme, &maxRadiusInput, "3000")
-
-						margins := layout.Inset{
-							Top:    unit.Dp(4),
-							Right:  unit.Dp(705),
-							Bottom: unit.Dp(10),
-							Left:   unit.Dp(35),
-						}
-
-						border := widget.Border{
-							Color:        color.NRGBA{R: 204, G: 204, B: 204, A: 255},
-							CornerRadius: unit.Dp(3),
-							Width:        unit.Dp(2),
-						}
-
-						return margins.Layout(gtx,
-							func(gtx GC) Dims {
-								return border.Layout(gtx, ed.Layout)
-							},
-						)
-					},
-				),
-
-				layout.Rigid(
-					func(gtx GC) Dims {
-
-						margins := layout.Inset{
-							Top:    unit.Dp(10),
-							Bottom: unit.Dp(10),
-							Right:  unit.Dp(605),
-							Left:   unit.Dp(35),
-						}
-
-						return margins.Layout(gtx,
-							func(gtx GC) Dims {
-								btn := material.Button(theme, &generateButton, "Generate")
-								return btn.Layout(gtx)
-							},
-						)
-					},
-				),
-			)
+			processGenerateButton(gtx, &lay, chan_map)
+			layoutUI(gtx, theme, &lay)
 
 			mx := gtx.Constraints.Max
 			mx.X -= uiShift
@@ -246,6 +86,123 @@ func run(window *app.Window, chan_map chan generator.Map) error {
 			e.Frame(gtx.Ops)
 		}
 	}
+}
+
+func initWidgets() (lay uiLayout) {
+	lay.nPoints.SingleLine = true
+	lay.nPoints.Alignment = text.End
+
+	lay.minRadius.SingleLine = true
+	lay.minRadius.Alignment = text.End
+
+	lay.maxRadius.SingleLine = true
+	lay.maxRadius.Alignment = text.End
+
+	return lay
+}
+
+func layoutUI(gtx GC, theme *material.Theme, lay *uiLayout) {
+	layout.Flex{
+		Axis:    layout.Vertical,
+		Spacing: layout.SpaceEnd,
+	}.Layout(gtx,
+		makeFlexLabel(theme, "Corners"),
+		makeFlexInput(gtx, theme, &lay.nPoints, "6"),
+
+		makeFlexLabel(theme, "Radius min"),
+		makeFlexInput(gtx, theme, &lay.minRadius, "2000"),
+
+		makeFlexLabel(theme, "Radius max"),
+		makeFlexInput(gtx, theme, &lay.maxRadius, "3000"),
+
+		makeFlexButton(gtx, theme, lay),
+	)
+}
+
+func makeFlexLabel(theme *material.Theme, label string) layout.FlexChild {
+	return layout.Rigid(func(gtx GC) Dims {
+		title := material.H6(theme, label)
+		title.Alignment = text.Start
+
+		return title.Layout(gtx)
+	})
+}
+
+func makeFlexInput(gtx GC, theme *material.Theme, field *widget.Editor, defaultValue string) layout.FlexChild {
+	return layout.Rigid(func(gtx GC) Dims {
+		ed := material.Editor(theme, field, defaultValue)
+
+		margins := layout.Inset{
+			Top:    unit.Dp(4),
+			Right:  unit.Dp(705),
+			Bottom: unit.Dp(10),
+			Left:   unit.Dp(35),
+		}
+
+		border := widget.Border{
+			Color:        color.NRGBA{R: 204, G: 204, B: 204, A: 255},
+			CornerRadius: unit.Dp(3),
+			Width:        unit.Dp(2),
+		}
+
+		return margins.Layout(gtx,
+			func(gtx GC) Dims {
+				return border.Layout(gtx, ed.Layout)
+			},
+		)
+	},
+	)
+}
+
+func makeFlexButton(gtx GC, theme *material.Theme, lay *uiLayout) layout.FlexChild {
+	return layout.Rigid(func(gtx GC) Dims {
+		margins := layout.Inset{
+			Top:    unit.Dp(10),
+			Bottom: unit.Dp(10),
+			Right:  unit.Dp(605),
+			Left:   unit.Dp(35),
+		}
+
+		return margins.Layout(gtx,
+			func(gtx GC) Dims {
+				btn := material.Button(theme, &lay.btnGenerate, "Generate")
+				return btn.Layout(gtx)
+			},
+		)
+	},
+	)
+}
+
+func processGenerateButton(gtx GC, lay *uiLayout, chan_map chan generator.Map) {
+	if !lay.btnGenerate.Clicked(gtx) {
+		return
+	}
+
+	var initials generator.InitialValues
+
+	inputString := lay.nPoints.Text()
+	inputString = strings.TrimSpace(inputString)
+	nSides, _ := strconv.ParseInt(inputString, 10, 32)
+	if nSides == 0 {
+		nSides = 6
+	}
+	initials.NumSides = int(nSides)
+
+	inputString = lay.minRadius.Text()
+	inputString = strings.TrimSpace(inputString)
+	initials.Raduis.Min, _ = strconv.ParseFloat(inputString, 32)
+	if initials.Raduis.Min <= 0 {
+		initials.Raduis.Min = 2000.
+	}
+
+	inputString = lay.maxRadius.Text()
+	inputString = strings.TrimSpace(inputString)
+	initials.Raduis.Max, _ = strconv.ParseFloat(inputString, 32)
+	if initials.Raduis.Max <= 0 {
+		initials.Raduis.Max = 3000.
+	}
+
+	go generator.GenerateBorders(chan_map, initials)
 }
 
 var cityMap generator.Map
