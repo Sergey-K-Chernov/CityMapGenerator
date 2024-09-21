@@ -265,4 +265,9 @@ func tryDrawMap(ops *op.Ops, mx image.Point, cityMap *generator.Map, chan_map ch
 			Path:  path.End(),
 			Width: 2,
 		}.Op())
+
+	defer clip.Ellipse{Min: image.Point{X: int(cityMap.Center.X*scale + float64(UI_SHIFT) - 2), Y: int(cityMap.Center.Y*scale - 2)},
+		Max: image.Point{X: int(cityMap.Center.X*scale + float64(UI_SHIFT) + 2), Y: int(cityMap.Center.Y*scale + 2)}}.Push(ops).Pop()
+	paint.ColorOp{Color: color.NRGBA{R: 0x60, A: 0xFF}}.Add(ops)
+	paint.PaintOp{}.Add(ops)
 }
