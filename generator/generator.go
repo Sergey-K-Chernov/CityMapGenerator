@@ -45,7 +45,7 @@ func GenerateBorders(chan_map chan Map, initials InitialValues) {
 		angle := angle_step * float64(i)
 		cityMap.BorderPoints[i] = generateRadialRandomPoint(angle-angle_variation, angle+angle_variation, rMin, rMax)
 
-		point := generateRadialRandomPoint(0, 2*math.Pi, 0, (rMin+rMax)/10.0)
+		point := generateRadialRandomPoint(0, 2*math.Pi, 0, initials.VertexShift)
 		cityMap.BorderPoints[i].Add(point)
 	}
 
