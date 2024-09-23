@@ -46,14 +46,25 @@ func startGui() {
 	os.Exit(0)
 }
 
-type uiLayout struct {
-	minRadius      widget.Editor
-	maxRadius      widget.Editor
-	nPoints        widget.Editor
-	pointVariation widget.Editor
+type inputField struct {
+	field        widget.Editor
+	label        string
+	defaultValue string
+}
 
-	btnGenerate widget.Clickable
-	btnAccept   widget.Clickable
+type button struct {
+	button widget.Clickable
+	label  string
+}
+
+type uiLayout struct {
+	minRadius      inputField
+	maxRadius      inputField
+	nPoints        inputField
+	pointVariation inputField
+
+	btnGenerate button
+	btnAccept   button
 }
 
 func run(window *app.Window) error {
@@ -91,17 +102,28 @@ func run(window *app.Window) error {
 }
 
 func initWidgets() (lay uiLayout) {
-	lay.nPoints.SingleLine = true
-	lay.nPoints.Alignment = text.End
+	lay.nPoints.field.SingleLine = true
+	lay.nPoints.field.Alignment = text.End
+	lay.nPoints.label = "Corners"
+	lay.nPoints.defaultValue = "3"
 
-	lay.minRadius.SingleLine = true
-	lay.minRadius.Alignment = text.End
+	lay.minRadius.field.SingleLine = true
+	lay.minRadius.field.Alignment = text.End
+	lay.minRadius.label = "Min radius"
+	lay.minRadius.defaultValue = "1000"
 
-	lay.maxRadius.SingleLine = true
-	lay.maxRadius.Alignment = text.End
+	lay.maxRadius.field.SingleLine = true
+	lay.maxRadius.field.Alignment = text.End
+	lay.maxRadius.label = "Max radius"
+	lay.maxRadius.defaultValue = "3000"
 
-	lay.pointVariation.SingleLine = true
-	lay.pointVariation.Alignment = text.End
+	lay.pointVariation.field.SingleLine = true
+	lay.pointVariation.field.Alignment = text.End
+	lay.pointVariation.label = "Variation"
+	lay.pointVariation.defaultValue = "300"
+
+	lay.btnGenerate.label = "Generate"
+	lay.btnAccept.label = "Accept"
 
 	return lay
 }
@@ -122,20 +144,20 @@ func layoutFirstStep(gtx GC, theme *material.Theme, lay *uiLayout) {
 				Spacing: layout.SpaceEnd,
 			}.Layout(gtx,
 
-				makeLabel(theme, "Corners"),
-				makeFlexInput(gtx, theme, &lay.nPoints, "3"),
+				makeLabel(theme, lay.nPoints.label),
+				makeFlexInput(gtx, theme, &lay.nPoints.field, lay.nPoints.defaultValue),
 
-				makeLabel(theme, "Radius min"),
-				makeFlexInput(gtx, theme, &lay.minRadius, "2000"),
+				makeLabel(theme, lay.minRadius.label),
+				makeFlexInput(gtx, theme, &lay.minRadius.field, lay.minRadius.defaultValue),
 
-				makeLabel(theme, "Radius max"),
-				makeFlexInput(gtx, theme, &lay.maxRadius, "3000"),
+				makeLabel(theme, lay.maxRadius.label),
+				makeFlexInput(gtx, theme, &lay.maxRadius.field, lay.maxRadius.defaultValue),
 
-				makeLabel(theme, "Variation"),
-				makeFlexInput(gtx, theme, &lay.pointVariation, "300"),
+				makeLabel(theme, lay.pointVariation.label),
+				makeFlexInput(gtx, theme, &lay.pointVariation.field, lay.pointVariation.defaultValue),
 
-				makeButton(gtx, theme, &lay.btnGenerate, "Generate"),
-				makeButton(gtx, theme, &lay.btnAccept, "Accept"),
+				makeButton(gtx, theme, &lay.btnGenerate.button, lay.btnGenerate.label),
+				makeButton(gtx, theme, &lay.btnAccept.button, lay.btnAccept.label),
 			)
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(mapWidth)}.Layout),
@@ -195,13 +217,13 @@ func makeButton(gtx GC, theme *material.Theme, button *widget.Clickable, label s
 }
 
 func processGenerateButton(gtx GC, lay *uiLayout, chan_map chan generator.Map, callback func()) {
-	if !lay.btnGenerate.Clicked(gtx) {
+	if !lay.btnGenerate.button.Clicked(gtx) {
 		return
 	}
 
 	var initials generator.InitialValues
 
-	inputString := lay.nPoints.Text()
+	inputString := lay.nPoints.field.Text()
 	inputString = strings.TrimSpace(inputString)
 	nSides, _ := strconv.ParseInt(inputString, 10, 32)
 	if nSides < 3 {
@@ -209,21 +231,21 @@ func processGenerateButton(gtx GC, lay *uiLayout, chan_map chan generator.Map, c
 	}
 	initials.NumSides = int(nSides)
 
-	inputString = lay.minRadius.Text()
+	inputString = lay.minRadius.field.Text()
 	inputString = strings.TrimSpace(inputString)
 	initials.Raduis.Min, _ = strconv.ParseFloat(inputString, 32)
 	if initials.Raduis.Min <= 0 {
 		initials.Raduis.Min = 2000.0
 	}
 
-	inputString = lay.maxRadius.Text()
+	inputString = lay.maxRadius.field.Text()
 	inputString = strings.TrimSpace(inputString)
 	initials.Raduis.Max, _ = strconv.ParseFloat(inputString, 32)
 	if initials.Raduis.Max <= 0 {
 		initials.Raduis.Max = 3000.0
 	}
 
-	inputString = lay.pointVariation.Text()
+	inputString = lay.pointVariation.field.Text()
 	inputString = strings.TrimSpace(inputString)
 	initials.VertexShift, _ = strconv.ParseFloat(inputString, 32)
 	if initials.VertexShift < 0.0 {
