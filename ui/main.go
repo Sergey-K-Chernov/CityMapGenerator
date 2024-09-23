@@ -30,6 +30,15 @@ type Dims = layout.Dimensions
 
 const UI_WIDTH int = 150
 
+type uiPage int
+
+const (
+	generateBordersPage uiPage = iota
+	generateCentersAndRoadsPage
+	generateBlocks
+	generateStreets
+)
+
 func main() {
 	go startGui()
 
@@ -65,6 +74,15 @@ type uiLayout struct {
 
 	btnGenerate button
 	btnAccept   button
+}
+
+type uiLayouter interface {
+	Layout()
+}
+
+type uiPages struct {
+	currentPage uiPage
+	pages       []uiLayouter
 }
 
 func run(window *app.Window) error {
