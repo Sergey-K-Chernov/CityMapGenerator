@@ -28,6 +28,8 @@ import (
 type GC = layout.Context
 type Dims = layout.Dimensions
 
+const UI_WIDTH int = 150
+
 func main() {
 	go startGui()
 
@@ -37,16 +39,12 @@ func main() {
 func startGui() {
 	window := new(app.Window)
 	window.Option(app.Title("Random city"))
-	window.Option(app.MaxSize(800, 600))
-	window.Option(app.MinSize(800, 600))
 	err := run(window)
 	if err != nil {
 		log.Fatal(err)
 	}
 	os.Exit(0)
 }
-
-const UI_SHIFT int = 200
 
 type uiLayout struct {
 	minRadius      widget.Editor
@@ -55,6 +53,7 @@ type uiLayout struct {
 	pointVariation widget.Editor
 
 	btnGenerate widget.Clickable
+	btnAccept   widget.Clickable
 }
 
 func run(window *app.Window) error {
@@ -78,11 +77,12 @@ func run(window *app.Window) error {
 			processGenerateButton(gtx, &lay, chan_map, func() {
 				window.Invalidate()
 			})
-			layoutUI(gtx, theme, &lay)
+			//layoutUI(gtx, theme, &lay)
+			layoutFirstStep(gtx, theme, &lay)
 
-			mx := gtx.Constraints.Max
-			mx.X -= UI_SHIFT
-			tryDrawMap(&ops, mx, &cityMap, chan_map)
+			mapConstraints := gtx.Constraints.Max
+			mapConstraints.X -= UI_WIDTH
+			tryDrawMap(&ops, mapConstraints, &cityMap, chan_map)
 
 			// Pass the drawing operations to the GPU.
 			e.Frame(gtx.Ops)
@@ -106,28 +106,43 @@ func initWidgets() (lay uiLayout) {
 	return lay
 }
 
-func layoutUI(gtx GC, theme *material.Theme, lay *uiLayout) {
-	layout.Flex{
-		Axis:    layout.Vertical,
-		Spacing: layout.SpaceEnd,
-	}.Layout(gtx,
-		makeFlexLabel(theme, "Corners"),
-		makeFlexInput(gtx, theme, &lay.nPoints, "3"),
+func layoutFirstStep(gtx GC, theme *material.Theme, lay *uiLayout) {
+	// Hack...
+	var uiFlexWeight float32
+	totalWidth := gtx.Constraints.Max.X
+	mapWidth := totalWidth - UI_WIDTH
 
-		makeFlexLabel(theme, "Radius min"),
-		makeFlexInput(gtx, theme, &lay.minRadius, "2000"),
+	uiFlexWeight = float32(UI_WIDTH) / float32(totalWidth)
+	//mapFlexWeight = float32(mapWidth) / float32(totalWidth)
 
-		makeFlexLabel(theme, "Radius max"),
-		makeFlexInput(gtx, theme, &lay.maxRadius, "3000"),
+	layout.Flex{}.Layout(gtx,
+		layout.Flexed(uiFlexWeight, func(gtx GC) Dims {
+			return layout.Flex{
+				Axis:    layout.Vertical,
+				Spacing: layout.SpaceEnd,
+			}.Layout(gtx,
 
-		makeFlexLabel(theme, "Variation"),
-		makeFlexInput(gtx, theme, &lay.pointVariation, "300"),
+				makeLabel(theme, "Corners"),
+				makeFlexInput(gtx, theme, &lay.nPoints, "3"),
 
-		makeFlexButton(gtx, theme, lay),
+				makeLabel(theme, "Radius min"),
+				makeFlexInput(gtx, theme, &lay.minRadius, "2000"),
+
+				makeLabel(theme, "Radius max"),
+				makeFlexInput(gtx, theme, &lay.maxRadius, "3000"),
+
+				makeLabel(theme, "Variation"),
+				makeFlexInput(gtx, theme, &lay.pointVariation, "300"),
+
+				makeButton(gtx, theme, &lay.btnGenerate, "Generate"),
+				makeButton(gtx, theme, &lay.btnAccept, "Accept"),
+			)
+		}),
+		layout.Rigid(layout.Spacer{Width: unit.Dp(mapWidth)}.Layout),
 	)
 }
 
-func makeFlexLabel(theme *material.Theme, label string) layout.FlexChild {
+func makeLabel(theme *material.Theme, label string) layout.FlexChild {
 	return layout.Rigid(func(gtx GC) Dims {
 		title := material.H6(theme, label)
 		title.Alignment = text.Start
@@ -138,13 +153,14 @@ func makeFlexLabel(theme *material.Theme, label string) layout.FlexChild {
 
 func makeFlexInput(gtx GC, theme *material.Theme, field *widget.Editor, defaultValue string) layout.FlexChild {
 	return layout.Rigid(func(gtx GC) Dims {
+
 		ed := material.Editor(theme, field, defaultValue)
 
 		margins := layout.Inset{
-			Top:    unit.Dp(4),
-			Right:  unit.Dp(705),
-			Bottom: unit.Dp(10),
-			Left:   unit.Dp(35),
+			Top:    unit.Dp(3),
+			Right:  unit.Dp(4),
+			Bottom: unit.Dp(6),
+			Left:   unit.Dp(4),
 		}
 
 		border := widget.Border{
@@ -158,27 +174,24 @@ func makeFlexInput(gtx GC, theme *material.Theme, field *widget.Editor, defaultV
 				return border.Layout(gtx, ed.Layout)
 			},
 		)
-	},
-	)
+	})
 }
 
-func makeFlexButton(gtx GC, theme *material.Theme, lay *uiLayout) layout.FlexChild {
+func makeButton(gtx GC, theme *material.Theme, button *widget.Clickable, label string) layout.FlexChild {
 	return layout.Rigid(func(gtx GC) Dims {
 		margins := layout.Inset{
-			Top:    unit.Dp(10),
-			Bottom: unit.Dp(10),
-			Right:  unit.Dp(605),
-			Left:   unit.Dp(35),
+			Top:    unit.Dp(3),
+			Bottom: unit.Dp(6),
+			Right:  unit.Dp(4),
+			Left:   unit.Dp(4),
 		}
 
 		return margins.Layout(gtx,
 			func(gtx GC) Dims {
-				btn := material.Button(theme, &lay.btnGenerate, "Generate")
+				btn := material.Button(theme, button, label)
 				return btn.Layout(gtx)
-			},
-		)
-	},
-	)
+			})
+	})
 }
 
 func processGenerateButton(gtx GC, lay *uiLayout, chan_map chan generator.Map, callback func()) {
@@ -225,7 +238,7 @@ func generateBorders(chan_map chan generator.Map, initials generator.InitialValu
 	callback()
 }
 
-func tryDrawMap(ops *op.Ops, mx image.Point, cityMap *generator.Map, chan_map chan generator.Map) {
+func tryDrawMap(ops *op.Ops, mapConstraints image.Point, cityMap *generator.Map, chan_map chan generator.Map) {
 	select {
 	case *cityMap = <-chan_map:
 		fmt.Print("Got new map\n")
@@ -247,17 +260,17 @@ func tryDrawMap(ops *op.Ops, mx image.Point, cityMap *generator.Map, chan_map ch
 	max_map.X += 100
 	max_map.Y += 100
 
-	scale := math.Min(float64(mx.X)/max_map.X, float64(mx.Y)/max_map.Y)
+	scale := math.Min(float64(mapConstraints.X)/max_map.X, float64(mapConstraints.Y)/max_map.Y)
 
 	dark_red := color.NRGBA{R: 0x60, A: 0xFF}
 	var path clip.Path
 	path.Begin(ops)
 
-	path.MoveTo(f32.Pt(float32(points[0].X*scale+float64(UI_SHIFT)), float32(points[0].Y*scale)))
+	path.MoveTo(f32.Pt(float32(points[0].X*scale+float64(UI_WIDTH)), float32(points[0].Y*scale)))
 	for _, p := range points {
-		path.LineTo(f32.Pt(float32(p.X*scale+float64(UI_SHIFT)), float32(p.Y*scale)))
+		path.LineTo(f32.Pt(float32(p.X*scale+float64(UI_WIDTH)), float32(p.Y*scale)))
 	}
-	path.LineTo(f32.Pt(float32(points[len(points)-1].X*scale+float64(UI_SHIFT)), float32(points[len(points)-1].Y*scale)))
+	path.LineTo(f32.Pt(float32(points[len(points)-1].X*scale+float64(UI_WIDTH)), float32(points[len(points)-1].Y*scale)))
 
 	path.Close()
 	paint.FillShape(ops, dark_red,
@@ -266,8 +279,8 @@ func tryDrawMap(ops *op.Ops, mx image.Point, cityMap *generator.Map, chan_map ch
 			Width: 2,
 		}.Op())
 
-	defer clip.Ellipse{Min: image.Point{X: int(cityMap.Center.X*scale + float64(UI_SHIFT) - 2), Y: int(cityMap.Center.Y*scale - 2)},
-		Max: image.Point{X: int(cityMap.Center.X*scale + float64(UI_SHIFT) + 2), Y: int(cityMap.Center.Y*scale + 2)}}.Push(ops).Pop()
+	defer clip.Ellipse{Min: image.Point{X: int(cityMap.Center.X*scale + float64(UI_WIDTH) - 2), Y: int(cityMap.Center.Y*scale - 2)},
+		Max: image.Point{X: int(cityMap.Center.X*scale + float64(UI_WIDTH) + 2), Y: int(cityMap.Center.Y*scale + 2)}}.Push(ops).Pop()
 	paint.ColorOp{Color: color.NRGBA{R: 0x60, A: 0xFF}}.Add(ops)
 	paint.PaintOp{}.Add(ops)
 }
