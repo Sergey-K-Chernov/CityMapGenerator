@@ -35,26 +35,6 @@ type button struct {
 	label  string
 }
 
-type uiBordersPage struct {
-	minRadius      inputField
-	maxRadius      inputField
-	nPoints        inputField
-	pointVariation inputField
-
-	btnGenerate button
-	btnAccept   button
-}
-
-type uiCentersAndRoadsPage struct {
-	nCenters  inputField
-	minRadius inputField
-	maxRadius inputField
-	branching inputField
-
-	btnGenerate button
-	btnAccept   button
-}
-
 type uiLayouter interface {
 	Layout(gtx GC, theme *material.Theme)
 }

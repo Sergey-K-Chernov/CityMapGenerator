@@ -7,6 +7,16 @@ import (
 	"gioui.org/widget/material"
 )
 
+type uiCentersAndRoadsPage struct {
+	nCenters  inputField
+	minRadius inputField
+	maxRadius inputField
+	branching inputField
+
+	btnGenerate button
+	btnAccept   button
+}
+
 func createCentersAndRoadsPage() (lay uiCentersAndRoadsPage) {
 	lay.nCenters.field.SingleLine = true
 	lay.nCenters.field.Alignment = text.End

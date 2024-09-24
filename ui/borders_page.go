@@ -11,6 +11,16 @@ import (
 	"gioui.org/widget/material"
 )
 
+type uiBordersPage struct {
+	minRadius      inputField
+	maxRadius      inputField
+	nPoints        inputField
+	pointVariation inputField
+
+	btnGenerate button
+	btnAccept   button
+}
+
 func createBordersPage() (lay uiBordersPage) {
 	lay.nPoints.field.SingleLine = true
 	lay.nPoints.field.Alignment = text.End
