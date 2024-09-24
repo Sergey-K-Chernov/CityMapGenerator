@@ -60,13 +60,9 @@ func run(window *app.Window) error {
 			// This graphics context is used for managing the rendering state
 			gtx := app.NewContext(&ops, e)
 
-			//processGenerateButton(gtx, &bordersPage, data.channel, )
-
-			//ui.currentPage = processAcceptButton(gtx, &bordersPage, data.cityMap)
-
 			btnProcessor := ui.pages[ui.currentPage].(uiButtonProcessor)
-
 			btnProcessor.ProcessButtons(gtx, &ui, &data)
+
 			ui.pages[ui.currentPage].Layout(gtx, theme)
 
 			mapConstraints := gtx.Constraints.Max
