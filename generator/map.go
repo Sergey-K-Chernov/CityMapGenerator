@@ -15,7 +15,18 @@ type InitialValuesMap struct {
 	VertexShift float64
 }
 
+type InitialValuesRoads struct {
+	NumCenters int
+	Raduis     Range
+	Branching  int
+}
+
 type Map struct {
 	BorderPoints []genmath.Point
 	Center       genmath.Point
+	Roads        []Road
+}
+
+type Road struct {
+	Points []genmath.Point
 }
