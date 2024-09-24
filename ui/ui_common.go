@@ -63,6 +63,19 @@ type uiPages struct {
 	pages       []uiLayouter
 }
 
+func makeUi() uiPages {
+	bordersPage := createBordersPage()
+	centersRoadsPage := createCentersAndRoadsPage()
+
+	var ui uiPages
+	ui.pages = make([]uiLayouter, 2)
+	ui.pages[genBordersPage] = &bordersPage
+	ui.pages[genCentersAndRoadsPage] = &centersRoadsPage
+	ui.currentPage = genBordersPage
+
+	return ui
+}
+
 func makeLabel(theme *material.Theme, label string) layout.FlexChild {
 	return layout.Rigid(func(gtx GC) Dims {
 		title := material.H6(theme, label)

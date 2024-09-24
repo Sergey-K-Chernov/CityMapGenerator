@@ -49,15 +49,7 @@ func run(window *app.Window) error {
 	}
 
 	var ops op.Ops
-
-	bordersPage := createBordersPage()
-	centersRoadsPage := createCentersAndRoadsPage()
-
-	var ui uiPages
-	ui.pages = make([]uiLayouter, 2)
-	ui.pages[genBordersPage] = &bordersPage
-	ui.pages[genCentersAndRoadsPage] = &centersRoadsPage
-	ui.currentPage = genBordersPage
+	ui := makeUi()
 
 	for {
 		switch e := window.Event().(type) {
