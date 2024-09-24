@@ -25,6 +25,12 @@ import (
 	"chirrwick.com/projects/city/generator/genmath"
 )
 
+type mapData struct {
+	cityMap     generator.Map
+	channel     chan generator.Map
+	invalidator func()
+}
+
 type GC = layout.Context
 type Dims = layout.Dimensions
 
@@ -33,10 +39,10 @@ const UI_WIDTH int = 150
 type uiPage int
 
 const (
-	generateBordersPage uiPage = iota
-	generateCentersAndRoadsPage
-	generateBlocks
-	generateStreets
+	genBordersPage uiPage = iota
+	genCentersAndRoadsPage
+	genBlocks
+	genStreets
 )
 
 func main() {
@@ -66,7 +72,7 @@ type button struct {
 	label  string
 }
 
-type uiLayout struct {
+type uiBordersPage struct {
 	minRadius      inputField
 	maxRadius      inputField
 	nPoints        inputField
@@ -76,8 +82,22 @@ type uiLayout struct {
 	btnAccept   button
 }
 
+type uiCentersAndRoadsPage struct {
+	nCenters  inputField
+	minRadius inputField
+	maxRadius inputField
+	branching inputField
+
+	btnGenerate button
+	btnAccept   button
+}
+
 type uiLayouter interface {
-	Layout()
+	Layout(gtx GC, theme *material.Theme)
+}
+
+type uiButtonProcessor interface {
+	ProcessButtons(gtx GC, ui *uiPages, data *mapData)
 }
 
 type uiPages struct {
@@ -87,12 +107,23 @@ type uiPages struct {
 
 func run(window *app.Window) error {
 	theme := material.NewTheme()
-	var cityMap generator.Map
-	chan_map := make(chan generator.Map)
+
+	var data mapData
+	data.channel = make(chan generator.Map)
+	data.invalidator = func() {
+		window.Invalidate()
+	}
 
 	var ops op.Ops
 
-	lay := initWidgets()
+	bordersPage := createBordersPage()
+	centersRoadsPage := createCentersAndRoadsPage()
+
+	var ui uiPages
+	ui.pages = make([]uiLayouter, 2)
+	ui.pages[genBordersPage] = &bordersPage
+	ui.pages[genCentersAndRoadsPage] = &centersRoadsPage
+	ui.currentPage = genBordersPage
 
 	for {
 		switch e := window.Event().(type) {
@@ -103,15 +134,18 @@ func run(window *app.Window) error {
 			// This graphics context is used for managing the rendering state
 			gtx := app.NewContext(&ops, e)
 
-			processGenerateButton(gtx, &lay, chan_map, func() {
-				window.Invalidate()
-			})
-			//layoutUI(gtx, theme, &lay)
-			layoutFirstStep(gtx, theme, &lay)
+			//processGenerateButton(gtx, &bordersPage, data.channel, )
+
+			//ui.currentPage = processAcceptButton(gtx, &bordersPage, data.cityMap)
+
+			btnProcessor := ui.pages[ui.currentPage].(uiButtonProcessor)
+
+			btnProcessor.ProcessButtons(gtx, &ui, &data)
+			ui.pages[ui.currentPage].Layout(gtx, theme)
 
 			mapConstraints := gtx.Constraints.Max
 			mapConstraints.X -= UI_WIDTH
-			tryDrawMap(&ops, mapConstraints, &cityMap, chan_map)
+			tryDrawMap(&ops, mapConstraints, &data.cityMap, data.channel)
 
 			// Pass the drawing operations to the GPU.
 			e.Frame(gtx.Ops)
@@ -119,7 +153,7 @@ func run(window *app.Window) error {
 	}
 }
 
-func initWidgets() (lay uiLayout) {
+func createBordersPage() (lay uiBordersPage) {
 	lay.nPoints.field.SingleLine = true
 	lay.nPoints.field.Alignment = text.End
 	lay.nPoints.label = "Corners"
@@ -143,11 +177,38 @@ func initWidgets() (lay uiLayout) {
 	lay.btnGenerate.label = "Generate"
 	lay.btnAccept.label = "Accept"
 
+	return
+}
+
+func createCentersAndRoadsPage() (lay uiCentersAndRoadsPage) {
+	lay.nCenters.field.SingleLine = true
+	lay.nCenters.field.Alignment = text.End
+	lay.nCenters.label = "Centers"
+	lay.nCenters.defaultValue = "2"
+
+	lay.minRadius.field.SingleLine = true
+	lay.minRadius.field.Alignment = text.End
+	lay.minRadius.label = "Min Radius"
+	lay.minRadius.defaultValue = "500"
+
+	lay.maxRadius.field.SingleLine = true
+	lay.maxRadius.field.Alignment = text.End
+	lay.maxRadius.label = "Max Radius"
+	lay.maxRadius.defaultValue = "1000"
+
+	lay.branching.field.SingleLine = true
+	lay.branching.field.Alignment = text.End
+	lay.branching.label = "Branching"
+	lay.branching.defaultValue = "2"
+
+	lay.btnGenerate.label = "Generate"
+	lay.btnAccept.label = "Accept"
+
 	return lay
 }
 
-func layoutFirstStep(gtx GC, theme *material.Theme, lay *uiLayout) {
-	// Hack...
+func (l *uiBordersPage) Layout(gtx GC, theme *material.Theme) {
+	// Fixed ui hack...
 	var uiFlexWeight float32
 	totalWidth := gtx.Constraints.Max.X
 	mapWidth := totalWidth - UI_WIDTH
@@ -162,20 +223,55 @@ func layoutFirstStep(gtx GC, theme *material.Theme, lay *uiLayout) {
 				Spacing: layout.SpaceEnd,
 			}.Layout(gtx,
 
-				makeLabel(theme, lay.nPoints.label),
-				makeFlexInput(gtx, theme, &lay.nPoints.field, lay.nPoints.defaultValue),
+				makeLabel(theme, l.nPoints.label),
+				makeFlexInput(gtx, theme, &l.nPoints.field, l.nPoints.defaultValue),
 
-				makeLabel(theme, lay.minRadius.label),
-				makeFlexInput(gtx, theme, &lay.minRadius.field, lay.minRadius.defaultValue),
+				makeLabel(theme, l.minRadius.label),
+				makeFlexInput(gtx, theme, &l.minRadius.field, l.minRadius.defaultValue),
 
-				makeLabel(theme, lay.maxRadius.label),
-				makeFlexInput(gtx, theme, &lay.maxRadius.field, lay.maxRadius.defaultValue),
+				makeLabel(theme, l.maxRadius.label),
+				makeFlexInput(gtx, theme, &l.maxRadius.field, l.maxRadius.defaultValue),
 
-				makeLabel(theme, lay.pointVariation.label),
-				makeFlexInput(gtx, theme, &lay.pointVariation.field, lay.pointVariation.defaultValue),
+				makeLabel(theme, l.pointVariation.label),
+				makeFlexInput(gtx, theme, &l.pointVariation.field, l.pointVariation.defaultValue),
 
-				makeButton(gtx, theme, &lay.btnGenerate.button, lay.btnGenerate.label),
-				makeButton(gtx, theme, &lay.btnAccept.button, lay.btnAccept.label),
+				makeButton(gtx, theme, &l.btnGenerate.button, l.btnGenerate.label),
+				makeButton(gtx, theme, &l.btnAccept.button, l.btnAccept.label),
+			)
+		}),
+		layout.Rigid(layout.Spacer{Width: unit.Dp(mapWidth)}.Layout),
+	)
+}
+
+func (l *uiCentersAndRoadsPage) Layout(gtx GC, theme *material.Theme) {
+	// Fixed ui hack...
+	var uiFlexWeight float32
+	totalWidth := gtx.Constraints.Max.X
+	mapWidth := totalWidth - UI_WIDTH
+
+	uiFlexWeight = float32(UI_WIDTH) / float32(totalWidth)
+
+	layout.Flex{}.Layout(gtx,
+		layout.Flexed(uiFlexWeight, func(gtx GC) Dims {
+			return layout.Flex{
+				Axis:    layout.Vertical,
+				Spacing: layout.SpaceEnd,
+			}.Layout(gtx,
+
+				makeLabel(theme, l.nCenters.label),
+				makeFlexInput(gtx, theme, &l.nCenters.field, l.nCenters.defaultValue),
+
+				makeLabel(theme, l.minRadius.label),
+				makeFlexInput(gtx, theme, &l.minRadius.field, l.minRadius.defaultValue),
+
+				makeLabel(theme, l.maxRadius.label),
+				makeFlexInput(gtx, theme, &l.maxRadius.field, l.maxRadius.defaultValue),
+
+				makeLabel(theme, l.branching.label),
+				makeFlexInput(gtx, theme, &l.branching.field, l.branching.defaultValue),
+
+				makeButton(gtx, theme, &l.btnGenerate.button, l.btnGenerate.label),
+				makeButton(gtx, theme, &l.btnAccept.button, l.btnAccept.label),
 			)
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(mapWidth)}.Layout),
@@ -234,14 +330,19 @@ func makeButton(gtx GC, theme *material.Theme, button *widget.Clickable, label s
 	})
 }
 
-func processGenerateButton(gtx GC, lay *uiLayout, chan_map chan generator.Map, callback func()) {
-	if !lay.btnGenerate.button.Clicked(gtx) {
-		return
+func (l *uiBordersPage) ProcessButtons(gtx GC, ui *uiPages, data *mapData) {
+	if l.btnGenerate.button.Clicked(gtx) {
+		l.processGenerateButton(gtx, data)
 	}
+	if l.btnAccept.button.Clicked(gtx) {
+		ui.currentPage = l.processAcceptButton(gtx, data)
+	}
+}
 
+func (l *uiBordersPage) processGenerateButton(gtx GC, data *mapData) {
 	var initials generator.InitialValues
 
-	inputString := lay.nPoints.field.Text()
+	inputString := l.nPoints.field.Text()
 	inputString = strings.TrimSpace(inputString)
 	nSides, _ := strconv.ParseInt(inputString, 10, 32)
 	if nSides < 3 {
@@ -249,28 +350,40 @@ func processGenerateButton(gtx GC, lay *uiLayout, chan_map chan generator.Map, c
 	}
 	initials.NumSides = int(nSides)
 
-	inputString = lay.minRadius.field.Text()
+	inputString = l.minRadius.field.Text()
 	inputString = strings.TrimSpace(inputString)
 	initials.Raduis.Min, _ = strconv.ParseFloat(inputString, 32)
 	if initials.Raduis.Min <= 0 {
 		initials.Raduis.Min = 2000.0
 	}
 
-	inputString = lay.maxRadius.field.Text()
+	inputString = l.maxRadius.field.Text()
 	inputString = strings.TrimSpace(inputString)
 	initials.Raduis.Max, _ = strconv.ParseFloat(inputString, 32)
 	if initials.Raduis.Max <= 0 {
 		initials.Raduis.Max = 3000.0
 	}
 
-	inputString = lay.pointVariation.field.Text()
+	inputString = l.pointVariation.field.Text()
 	inputString = strings.TrimSpace(inputString)
 	initials.VertexShift, _ = strconv.ParseFloat(inputString, 32)
 	if initials.VertexShift < 0.0 {
 		initials.VertexShift = initials.Raduis.Max / 10.0
 	}
 
-	go generateBorders(chan_map, initials, callback)
+	go generateBorders(data.channel, initials, data.invalidator)
+}
+
+func (l *uiBordersPage) processAcceptButton(gtx GC, data *mapData) uiPage {
+	if len(data.cityMap.BorderPoints) == 0 {
+		return genBordersPage
+	}
+
+	return genCentersAndRoadsPage
+}
+
+func (l *uiCentersAndRoadsPage) ProcessButtons(gtx GC, ui *uiPages, data *mapData) {
+	println("TO DO")
 }
 
 func generateBorders(chan_map chan generator.Map, initials generator.InitialValues, callback func()) {
