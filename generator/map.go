@@ -9,7 +9,7 @@ type Range struct {
 	Max float64
 }
 
-type InitialValues struct {
+type InitialValuesMap struct {
 	Raduis      Range
 	NumSides    int
 	VertexShift float64

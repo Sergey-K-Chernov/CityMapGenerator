@@ -84,7 +84,7 @@ func (l *uiBordersPage) ProcessButtons(gtx GC, ui *uiPages, data *mapData) {
 }
 
 func (l *uiBordersPage) processGenerateButton(gtx GC, data *mapData) {
-	var initials generator.InitialValues
+	var initials generator.InitialValuesMap
 
 	inputString := l.nPoints.field.Text()
 	inputString = strings.TrimSpace(inputString)
@@ -126,7 +126,7 @@ func (l *uiBordersPage) processAcceptButton(gtx GC, data *mapData) uiPage {
 	return genCentersAndRoadsPage
 }
 
-func generateBorders(chanMap chan generator.Map, initials generator.InitialValues, invalidator func()) {
+func generateBorders(chanMap chan generator.Map, initials generator.InitialValuesMap, invalidator func()) {
 	generator.GenerateBorders(chanMap, initials)
 	invalidator()
 }

@@ -30,7 +30,7 @@ func shiftPoints(points []genmath.Point) (shift genmath.Point) {
 	return
 }
 
-func GenerateBorders(chan_map chan Map, initials InitialValues) {
+func GenerateBorders(chan_map chan Map, initials InitialValuesMap) {
 	nPoints := initials.NumSides
 	rMin := initials.Raduis.Min
 	rMax := initials.Raduis.Max
