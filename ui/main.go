@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"gioui.org/app"
-	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/widget/material"
 
@@ -17,11 +16,6 @@ type mapData struct {
 	channel     chan generator.Map
 	invalidator func()
 }
-
-type GC = layout.Context
-type Dims = layout.Dimensions
-
-const UI_WIDTH int = 150
 
 func main() {
 	go startGui()
@@ -65,9 +59,7 @@ func run(window *app.Window) error {
 
 			ui.pages[ui.currentPage].Layout(gtx, theme)
 
-			mapConstraints := gtx.Constraints.Max
-			mapConstraints.X -= UI_WIDTH
-			tryDrawMap(&ops, mapConstraints, &data.cityMap, data.channel)
+			tryDrawMap(&ops, gtx, &data)
 
 			// Pass the drawing operations to the GPU.
 			e.Frame(gtx.Ops)

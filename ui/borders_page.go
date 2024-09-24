@@ -33,7 +33,7 @@ func createBordersPage() (lay uiBordersPage) {
 	lay.pointVariation.defaultValue = "300"
 
 	lay.btnGenerate.label = "Generate"
-	lay.btnAccept.label = "Accept"
+	lay.btnAccept.label = "Accept borders"
 
 	return
 }

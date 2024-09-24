@@ -10,6 +10,11 @@ import (
 	"gioui.org/widget/material"
 )
 
+const UI_WIDTH int = 150
+
+type GC = layout.Context
+type Dims = layout.Dimensions
+
 type uiPage int
 
 const (

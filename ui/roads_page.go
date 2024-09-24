@@ -29,7 +29,7 @@ func createCentersAndRoadsPage() (lay uiCentersAndRoadsPage) {
 	lay.branching.defaultValue = "2"
 
 	lay.btnGenerate.label = "Generate"
-	lay.btnAccept.label = "Accept"
+	lay.btnAccept.label = "Accept roads"
 
 	return lay
 }
@@ -70,5 +70,19 @@ func (l *uiCentersAndRoadsPage) Layout(gtx GC, theme *material.Theme) {
 }
 
 func (l *uiCentersAndRoadsPage) ProcessButtons(gtx GC, ui *uiPages, data *mapData) {
+	if l.btnGenerate.button.Clicked(gtx) {
+		l.processGenerateButton(gtx, data)
+	}
+	if l.btnAccept.button.Clicked(gtx) {
+		ui.currentPage = l.processAcceptButton(gtx, data)
+	}
+}
+
+func (l *uiCentersAndRoadsPage) processGenerateButton(gtx GC, data *mapData) {
 	println("TO DO")
+}
+
+func (l *uiCentersAndRoadsPage) processAcceptButton(gtx GC, data *mapData) uiPage {
+	println("TO DO")
+	return genCentersAndRoadsPage
 }
