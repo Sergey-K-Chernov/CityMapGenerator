@@ -63,6 +63,36 @@ func tryDrawMap(ops *op.Ops, gtx GC, data *mapData) {
 			Width: 2,
 		}.Op())
 
+	if len(data.cityMap.Roads) > 0 {
+		for _, rd := range data.cityMap.Roads {
+			dark_blue := color.NRGBA{B: 0x60, A: 0xFF}
+			var path clip.Path
+
+			rdPoints := make([]f32.Point, 0)
+
+			for i := 0; i < len(rd.Points); i++ {
+				x := float32(rd.Points[i].X*scale + float64(UI_WIDTH))
+				y := float32(rd.Points[i].Y * scale)
+				rdPoints = append(rdPoints, f32.Pt(x, y))
+			}
+
+			path.Begin(ops)
+
+			path.MoveTo(rdPoints[0])
+			for _, p := range rdPoints {
+				path.LineTo(p)
+			}
+			path.Close()
+
+			paint.FillShape(ops, dark_blue,
+				clip.Stroke{
+					Path:  path.End(),
+					Width: 2,
+				}.Op())
+
+		}
+	}
+
 	centerX := int(data.cityMap.Center.X*scale + float64(UI_WIDTH))
 	centerY := int(data.cityMap.Center.Y * scale)
 	r := 2
