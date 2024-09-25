@@ -86,3 +86,97 @@ func TestDegToRad(t *testing.T) {
 		}
 	}
 }
+
+func TestIntersectLineSegments(t *testing.T) {
+	l1s := [...]LineSegment{
+		{Begin: Point{X: -5, Y: 0}, End: Point{X: 5, Y: 0}},
+		{Begin: Point{X: 0, Y: 0}, End: Point{X: 10, Y: 0}},
+		{Begin: Point{X: 0, Y: 0}, End: Point{X: 10, Y: 10}},
+		{Begin: Point{X: 0, Y: 0}, End: Point{X: 10, Y: 0}},
+		{Begin: Point{X: 0, Y: 0}, End: Point{X: 10, Y: 0}},
+		{Begin: Point{X: 0, Y: 0}, End: Point{X: 10, Y: 10}},
+	}
+
+	l2s := [...]LineSegment{
+		{Begin: Point{X: 0, Y: -5}, End: Point{X: 0, Y: 5}},
+		{Begin: Point{X: 0, Y: 0}, End: Point{X: 0, Y: 10}},
+		{Begin: Point{X: 0, Y: 10}, End: Point{X: 10, Y: 0}},
+		{Begin: Point{X: 10, Y: 10}, End: Point{X: 10, Y: 0}},
+		{Begin: Point{X: 11, Y: 10}, End: Point{X: 11, Y: 0}},
+		{Begin: Point{X: 0, Y: -1}, End: Point{X: 10, Y: 9}},
+	}
+
+	type Answer struct {
+		p  Point
+		ok bool
+	}
+
+	answers := [...]Answer{
+		{p: Point{X: 0, Y: 0}, ok: true},
+		{p: Point{X: 0, Y: 0}, ok: true},
+		{p: Point{X: 5, Y: 5}, ok: true},
+		{p: Point{X: 10, Y: 0}, ok: true},
+		{p: Point{}, ok: false},
+		{p: Point{}, ok: false},
+	}
+
+	for i, l1 := range l1s {
+		l2 := l2s[i]
+		p, ok := l1.Intersect(l2)
+
+		if ok != answers[i].ok {
+			t.Fatalf(`case %d failed: ok = %t, must be %t`, i, ok, answers[i].ok)
+		} else {
+			if ok && !AlmostEqual(p.X, answers[i].p.X, 0.000001) && AlmostEqual(p.Y, answers[i].p.Y, 0.000001) {
+				t.Fatalf(`case %d failed: point is (%f;%f), must be (%f;%f)`, i, p.X, p.Y, answers[i].p.X, answers[i].p.Y)
+			}
+		}
+	}
+}
+
+func TestIntersectLines(t *testing.T) {
+	l1s := [...]Line{
+		{Origin: Point{X: -5, Y: 0}, Vector: Point{X: 1, Y: 0}},
+		{Origin: Point{X: 0, Y: 0}, Vector: Point{X: 1, Y: 0}},
+		{Origin: Point{X: 0, Y: 0}, Vector: Point{X: 0.707107, Y: 0.707107}},
+		{Origin: Point{X: 0, Y: 0}, Vector: Point{X: 1, Y: 0}},
+		{Origin: Point{X: 0, Y: 0}, Vector: Point{X: 1, Y: 0}},
+		{Origin: Point{X: 0, Y: 0}, Vector: Point{X: 0.707107, Y: 0.707107}},
+	}
+
+	l2s := [...]Line{
+		{Origin: Point{X: 0, Y: -5}, Vector: Point{X: 0, Y: 1}},
+		{Origin: Point{X: 0, Y: 0}, Vector: Point{X: 0, Y: 1}},
+		{Origin: Point{X: 0, Y: 10}, Vector: Point{X: 0.707107, Y: -0.707107}},
+		{Origin: Point{X: 10, Y: 10}, Vector: Point{X: 0, Y: -1}},
+		{Origin: Point{X: 11, Y: 10}, Vector: Point{X: 0, Y: -1}},
+		{Origin: Point{X: 0, Y: -1}, Vector: Point{X: 0.707107, Y: 0.707107}},
+	}
+
+	type Answer struct {
+		p  Point
+		ok bool
+	}
+
+	answers := [...]Answer{
+		{p: Point{X: 0, Y: 0}, ok: true},
+		{p: Point{X: 0, Y: 0}, ok: true},
+		{p: Point{X: 5, Y: 5}, ok: true},
+		{p: Point{X: 10, Y: 0}, ok: true},
+		{p: Point{X: 11, Y: 0}, ok: true},
+		{p: Point{}, ok: false},
+	}
+
+	for i, l1 := range l1s {
+		l2 := l2s[i]
+		p, ok := l1.Intersect(l2)
+
+		if ok != answers[i].ok {
+			t.Fatalf(`case %d failed: ok = %t, must be %t`, i, ok, answers[i].ok)
+		} else {
+			if ok && !AlmostEqual(p.X, answers[i].p.X, 0.000001) && AlmostEqual(p.Y, answers[i].p.Y, 0.000001) {
+				t.Fatalf(`case %d failed: point is (%f;%f), must be (%f;%f)`, i, p.X, p.Y, answers[i].p.X, answers[i].p.Y)
+			}
+		}
+	}
+}
