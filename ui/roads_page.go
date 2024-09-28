@@ -25,24 +25,24 @@ func createCentersAndRoadsPage() (lay uiCentersAndRoadsPage) {
 	lay.nCenters.field.SingleLine = true
 	lay.nCenters.field.Alignment = text.End
 	lay.nCenters.label = "Centers"
-	lay.nCenters.defaultValue = "2"
+	lay.nCenters.defaultValue = "3"
 
 	lay.minRadius.field.SingleLine = true
 	lay.minRadius.field.Alignment = text.End
 	lay.minRadius.label = "Min Radius"
-	lay.minRadius.defaultValue = "500"
+	lay.minRadius.defaultValue = "200"
 
 	lay.maxRadius.field.SingleLine = true
 	lay.maxRadius.field.Alignment = text.End
 	lay.maxRadius.label = "Max Radius"
-	lay.maxRadius.defaultValue = "1000"
+	lay.maxRadius.defaultValue = "500"
 
 	lay.branching.field.SingleLine = true
 	lay.branching.field.Alignment = text.End
-	lay.branching.label = "Branching"
-	lay.branching.defaultValue = "0"
+	lay.branching.label = "Exits from city"
+	lay.branching.defaultValue = "10"
 
-	lay.btnGenerate.label = "Generate"
+	lay.btnGenerate.label = "Generate roads"
 	lay.btnAccept.label = "Accept roads"
 
 	return lay
@@ -72,6 +72,8 @@ func (l *uiCentersAndRoadsPage) Layout(gtx GC, theme *material.Theme) {
 				makeLabel(theme, l.maxRadius.label),
 				makeFlexInput(gtx, theme, &l.maxRadius.field, l.maxRadius.defaultValue),
 
+				layout.Rigid(layout.Spacer{Height: unit.Dp(20)}.Layout),
+
 				makeLabel(theme, l.branching.label),
 				makeFlexInput(gtx, theme, &l.branching.field, l.branching.defaultValue),
 
@@ -97,30 +99,33 @@ func (l *uiCentersAndRoadsPage) processGenerateButton(gtx GC, data *mapData) {
 
 	inputString := l.nCenters.field.Text()
 	inputString = strings.TrimSpace(inputString)
-	nSides, _ := strconv.ParseInt(inputString, 10, 32)
-	if nSides < 1 {
-		nSides = 1
+	nCenters, _ := strconv.ParseInt(inputString, 10, 32)
+	if nCenters < 1 {
+		nCenters = 3
 	}
-	initials.NumCenters = int(nSides)
+	initials.NumCenters = int(nCenters)
 
 	inputString = l.minRadius.field.Text()
 	inputString = strings.TrimSpace(inputString)
 	initials.Raduis.Min, _ = strconv.ParseFloat(inputString, 32)
 	if initials.Raduis.Min <= 0 {
-		initials.Raduis.Min = 500.0
+		initials.Raduis.Min = 200.0
 	}
 
 	inputString = l.maxRadius.field.Text()
 	inputString = strings.TrimSpace(inputString)
 	initials.Raduis.Max, _ = strconv.ParseFloat(inputString, 32)
 	if initials.Raduis.Max <= 0 {
-		initials.Raduis.Max = 1000.0
+		initials.Raduis.Max = 500.0
 	}
 
 	inputString = l.branching.field.Text()
 	inputString = strings.TrimSpace(inputString)
 	br, _ := strconv.ParseInt(inputString, 10, 32)
 	initials.Branching = int(br)
+	if initials.Branching == 0 {
+		initials.Branching = 10
+	}
 
 	go generateRoads(data.cityMap, data.channel, initials, data.invalidator)
 }
