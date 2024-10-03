@@ -2,6 +2,7 @@ package generator
 
 import (
 	"math"
+	"sort"
 
 	gm "chirrwick.com/projects/city/generator/genmath"
 )
@@ -103,12 +104,12 @@ func connectCenters(centers []gm.Point) (roads []Road) {
 
 func generateExits(cityMap Map, initials InitialValuesRoads) []gm.Point {
 	angle_step := gm.DegToRad(360. / float64(initials.Branching))
-	angle_variation := angle_step / 2
+	angle_variation := angle_step / 4
 
 	intermediate_exit_vectors := make([]gm.Point, initials.Branching)
 
 	for i := 0; i < initials.Branching; i++ {
-		angle := angle_step * float64(i)
+		angle := angle_step/2 + angle_step*float64(i)
 		intermediate_exit_vectors[i] = generateRadialRandomPoint(angle-angle_variation, angle+angle_variation, 1, 1)
 		intermediate_exit_vectors[i].AddInPlace(cityMap.Center)
 	}
@@ -137,6 +138,12 @@ func connectCentersWithExits(centers []gm.Point, exits []gm.Point) (roads []Road
 		i := findClosestPointIndex(ep, centers)
 		roadFans[i].outer = append(roadFans[i].outer, makeFan(ep))
 	}
+
+	sort.Slice(roadFans[0].outer, func(a, b int) bool {
+		angleA := roadFans[0].outer[a].root.Sub((roadFans[0].root)).Angle()
+		angleB := roadFans[0].outer[b].root.Sub((roadFans[0].root)).Angle()
+		return angleA < angleB
+	})
 
 	for _, fan := range roadFans {
 		fan.split()

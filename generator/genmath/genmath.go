@@ -46,6 +46,10 @@ func (p Point) Length() float64 {
 	return math.Sqrt(p.LengthSq())
 }
 
+func (p Point) Angle() float64 {
+	return math.Atan2(p.Y, p.X)
+}
+
 func (s LineSegment) GetVector() Vector2D {
 	return Vector2D{X: s.End.X - s.Begin.X, Y: s.End.Y - s.Begin.Y}
 }
