@@ -25,7 +25,14 @@ func tryDrawMap(ops *op.Ops, gtx GC, data *mapData) {
 		return
 	}
 
-	points := data.cityMap.BorderPoints
+	scale := calcScale(gtx, data.cityMap.BorderPoints)
+
+	drawBorders(ops, data.cityMap.BorderPoints, scale)
+	drawRoads(ops, data, scale)
+	drawCenter(ops, data, scale)
+}
+
+func calcScale(gtx GC, points []genmath.Point) float64 {
 	var max_map genmath.Point
 
 	for _, p := range points {
@@ -38,8 +45,10 @@ func tryDrawMap(ops *op.Ops, gtx GC, data *mapData) {
 	mapConstraints := gtx.Constraints.Max
 	mapConstraints.X -= UI_WIDTH
 
-	scale := math.Min(float64(mapConstraints.X)/max_map.X, float64(mapConstraints.Y)/max_map.Y)
+	return math.Min(float64(mapConstraints.X)/max_map.X, float64(mapConstraints.Y)/max_map.Y)
+}
 
+func drawBorders(ops *op.Ops, points []genmath.Point, scale float64) {
 	drawPoints := make([]f32.Point, 0)
 	for i := 0; i < len(points); i++ {
 		x := float32(points[i].X*scale + float64(UI_WIDTH))
@@ -62,37 +71,43 @@ func tryDrawMap(ops *op.Ops, gtx GC, data *mapData) {
 			Path:  path.End(),
 			Width: 2,
 		}.Op())
+}
 
-	if len(data.cityMap.Roads) > 0 {
-		for _, rd := range data.cityMap.Roads {
-			dark_blue := color.NRGBA{B: 0x60, A: 0xFF}
-			var path clip.Path
-
-			rdPoints := make([]f32.Point, 0)
-
-			for i := 0; i < len(rd.Points); i++ {
-				x := float32(rd.Points[i].X*scale + float64(UI_WIDTH))
-				y := float32(rd.Points[i].Y * scale)
-				rdPoints = append(rdPoints, f32.Pt(x, y))
-			}
-
-			path.Begin(ops)
-
-			path.MoveTo(rdPoints[0])
-			for _, p := range rdPoints {
-				path.LineTo(p)
-			}
-			path.Close()
-
-			paint.FillShape(ops, dark_blue,
-				clip.Stroke{
-					Path:  path.End(),
-					Width: 2,
-				}.Op())
-
-		}
+func drawRoads(ops *op.Ops, data *mapData, scale float64) {
+	if len(data.cityMap.Roads) <= 0 {
+		return
 	}
 
+	for _, rd := range data.cityMap.Roads {
+		dark_blue := color.NRGBA{B: 0x60, A: 0xFF}
+		var path clip.Path
+
+		rdPoints := make([]f32.Point, 0)
+
+		for i := 0; i < len(rd.Points); i++ {
+			x := float32(rd.Points[i].X*scale + float64(UI_WIDTH))
+			y := float32(rd.Points[i].Y * scale)
+			rdPoints = append(rdPoints, f32.Pt(x, y))
+		}
+
+		path.Begin(ops)
+
+		path.MoveTo(rdPoints[0])
+		for _, p := range rdPoints {
+			path.LineTo(p)
+		}
+		path.Close()
+
+		paint.FillShape(ops, dark_blue,
+			clip.Stroke{
+				Path:  path.End(),
+				Width: 2,
+			}.Op())
+
+	}
+}
+
+func drawCenter(ops *op.Ops, data *mapData, scale float64) {
 	centerX := int(data.cityMap.Center.X*scale + float64(UI_WIDTH))
 	centerY := int(data.cityMap.Center.Y * scale)
 	r := 2
@@ -100,5 +115,6 @@ func tryDrawMap(ops *op.Ops, gtx GC, data *mapData) {
 	defer clip.Ellipse{Min: image.Point{X: centerX - r, Y: centerY - r},
 		Max: image.Point{X: centerX + r, Y: centerY + r}}.Push(ops).Pop()
 	paint.ColorOp{Color: color.NRGBA{R: 0x60, A: 0xFF}}.Add(ops)
+
 	paint.PaintOp{}.Add(ops)
 }
