@@ -121,7 +121,7 @@ func get_map_rect(city_map Map) (rect gm.Rect) {
 	return
 }
 
-// Consider figure is convex polygon
+// Consider figure is convex polygon - переписать на
 func check_inside_borders(p gm.Point, city_map Map) bool {
 	bp := city_map.BorderPoints
 	for i := range bp {
@@ -137,4 +137,54 @@ func check_inside_borders(p gm.Point, city_map Map) bool {
 		}
 	}
 	return false
+}
+
+func checkPointInsidePolygon(p gm.Point, poly []gm.Point) bool {
+	sum := 0
+	for i := range poly {
+		i_plus_1 := i + 1
+		if i_plus_1 == len(poly) {
+			i_plus_1 = 0
+		}
+
+		sum += checkXRayIntersectsSection(p, poly[i], poly[i_plus_1])
+	}
+	return sum%2 > 0
+}
+
+func checkXRayIntersectsSection(p, a, b gm.Point) int {
+	ax := a.X - p.X
+	ay := a.Y - p.Y
+
+	bx := b.X - p.X
+	by := b.Y - p.Y
+
+	intersect_axis_x := (ay*by <= 0)
+	intersect_axis_y := (ax*bx <= 0)
+
+	// Send ray to the right, test for intersecting positive x axis .
+
+	// No intersection at all:
+	if !intersect_axis_x {
+		return 0
+	}
+
+	if !intersect_axis_y {
+		// Both to the left - no intersection
+		if ax < 0 {
+			return 0
+		}
+		// Both to the right - have intersection
+		return 1
+	}
+
+	// find intersection point
+	fraction := math.Abs(ay / (by - ay))
+	x := ax + fraction*(bx-ax)
+
+	if x < 0 {
+		return 0
+	}
+
+	return 1
 }
