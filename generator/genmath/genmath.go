@@ -38,6 +38,10 @@ type Rect struct {
 	Left, Top, Right, Bottom float64
 }
 
+type Triangle struct {
+	A, B, C Point
+}
+
 func (p Point) LengthSq() float64 {
 	return p.X*p.X + p.Y*p.Y
 }
@@ -81,6 +85,17 @@ func (s LineSegment) Split(ratio float64) (LineSegment, LineSegment) {
 
 func (r Rect) HasPoint(p Point) bool {
 	return p.X >= r.Left && p.X <= r.Right && p.Y >= r.Bottom && p.Y <= r.Top
+}
+
+func (t Triangle) HasPoint(p Point) bool {
+	s1 := (t.A.X-p.X)*(t.B.Y-t.A.Y) - (t.B.X-t.A.X)*(t.A.Y-p.Y)
+	s2 := (t.B.X-p.X)*(t.C.Y-t.B.Y) - (t.C.X-t.B.X)*(t.B.Y-p.Y)
+	s3 := (t.C.X-p.X)*(t.A.Y-t.C.Y) - (t.A.X-t.C.X)*(t.C.Y-p.Y)
+
+	if math.Signbit(s1) == math.Signbit(s2) && math.Signbit(s1) == math.Signbit(s3) {
+		return true
+	}
+	return false
 }
 
 func (p *Point) Normalize() *Point {

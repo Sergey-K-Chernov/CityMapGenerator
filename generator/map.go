@@ -21,12 +21,21 @@ type InitialValuesRoads struct {
 	Branching  int
 }
 
+type InitialValuesBlocks struct {
+	Size Range
+}
+
 type Map struct {
 	BorderPoints []genmath.Point
 	Center       genmath.Point
 	Roads        []Road
+	Blocks       []Block
 }
 
 type Road struct {
+	Points []genmath.Point
+}
+
+type Block struct {
 	Points []genmath.Point
 }

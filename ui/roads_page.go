@@ -131,8 +131,11 @@ func (l *uiCentersAndRoadsPage) processGenerateButton(gtx GC, data *mapData) {
 }
 
 func (l *uiCentersAndRoadsPage) processAcceptButton(gtx GC, data *mapData) uiPage {
-	println("TO DO")
-	return genCentersAndRoadsPage
+	if len(data.cityMap.Roads) == 0 {
+		return genCentersAndRoadsPage
+	}
+
+	return genBlocksPage
 }
 
 func generateRoads(cityMap generator.Map, chanMap chan generator.Map, initials generator.InitialValuesRoads, invalidator func()) {

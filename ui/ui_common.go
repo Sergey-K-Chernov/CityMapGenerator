@@ -20,8 +20,8 @@ type uiPage int
 const (
 	genBordersPage uiPage = iota
 	genCentersAndRoadsPage
-	genBlocks
-	genStreets
+	genBlocksPage
+	genStreetsPage
 )
 
 type inputField struct {
@@ -51,11 +51,13 @@ type uiPages struct {
 func makeUi() uiPages {
 	bordersPage := createBordersPage()
 	centersRoadsPage := createCentersAndRoadsPage()
+	blocksPage := createBlocksPage()
 
 	var ui uiPages
-	ui.pages = make([]uiLayouter, 2)
+	ui.pages = make([]uiLayouter, 3)
 	ui.pages[genBordersPage] = &bordersPage
 	ui.pages[genCentersAndRoadsPage] = &centersRoadsPage
+	ui.pages[genBlocksPage] = &blocksPage
 	ui.currentPage = genBordersPage
 
 	return ui
