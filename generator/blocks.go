@@ -123,20 +123,7 @@ func get_map_rect(city_map Map) (rect gm.Rect) {
 
 // Consider figure is convex polygon - переписать на
 func check_inside_borders(p gm.Point, city_map Map) bool {
-	bp := city_map.BorderPoints
-	for i := range bp {
-		i_plus_1 := i + 1
-		if i_plus_1 == len(bp) {
-			i_plus_1 = 0
-		}
-
-		tri := gm.Triangle{A: city_map.Center, B: bp[i], C: bp[i_plus_1]}
-
-		if tri.HasPoint(p) {
-			return true
-		}
-	}
-	return false
+	return checkPointInsidePolygon(p, city_map.BorderPoints)
 }
 
 func checkPointInsidePolygon(p gm.Point, poly []gm.Point) bool {
