@@ -87,6 +87,39 @@ func TestDegToRad(t *testing.T) {
 	}
 }
 
+func TestRotate(t *testing.T) {
+	points := []Point{
+		{X: 0, Y: 1},
+		{X: 0, Y: 1},
+		{X: -1, Y: 1},
+		{X: -1, Y: 1},
+	}
+
+	angles := []float64{
+		DegToRad(90),
+		-math.Pi / 2,
+		-math.Pi / 2,
+		-math.Pi / 4,
+	}
+
+	answers := []Point{
+		{X: -1, Y: 0},
+		{X: 1, Y: 0},
+		{X: 1, Y: 1},
+		{X: 0, Y: 1.414214},
+	}
+
+	if len(points) != len(angles) || len(points) != len(answers) {
+		t.Fatalf("Wrong contitions. Array lengths are not equal")
+	}
+
+	for i := 0; i < len(points); i++ {
+		if !AlmostEqualPoints(answers[i], *points[i].Rotate(angles[i]), 0.0001) {
+			t.Fatalf("Test %d faliled", i)
+		}
+	}
+}
+
 func TestIntersectLineSegments(t *testing.T) {
 	l1s := [...]LineSegment{
 		{Begin: Point{X: -5, Y: 0}, End: Point{X: 5, Y: 0}},

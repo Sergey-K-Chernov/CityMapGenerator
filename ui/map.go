@@ -94,7 +94,23 @@ func drawBlocks(ops *op.Ops, data *mapData, scale float64) {
 				Width: 2,
 			}.Op())
 
+		for i, p := range block.Points {
+			clr := uint8(float64(i) / float64(len(block.Points)) * 255)
+			drawDebugVertex(ops, p, clr, scale)
+		}
 	}
+}
+
+func drawDebugVertex(ops *op.Ops, p genmath.Point, clr uint8, scale float64) {
+	x := int(p.X*scale + float64(UI_WIDTH))
+	y := int(p.Y * scale)
+	r := 3
+
+	defer clip.Ellipse{Min: image.Point{X: x - r, Y: y - r},
+		Max: image.Point{X: x + r, Y: y + r}}.Push(ops).Pop()
+	paint.ColorOp{Color: color.NRGBA{B: clr, A: 0xFF}}.Add(ops)
+
+	paint.PaintOp{}.Add(ops)
 }
 
 func drawCenter(ops *op.Ops, data *mapData, scale float64) {

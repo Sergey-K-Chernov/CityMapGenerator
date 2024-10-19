@@ -1,12 +1,17 @@
 package genmath
 
 import (
+	"fmt"
 	"math"
 	"math/rand/v2"
 )
 
 func AlmostEqual(a, b, threshold float64) bool {
 	return math.Abs(a-b) <= threshold
+}
+
+func AlmostEqualPoints(a, b Point, threshold float64) bool {
+	return AlmostEqual(a.X, b.X, threshold) && AlmostEqual(a.Y, b.Y, threshold)
 }
 
 func DegToRad(value float64) float64 {
@@ -42,6 +47,10 @@ type Triangle struct {
 	A, B, C Point
 }
 
+func (p Point) Print() {
+	fmt.Printf("{%f, %f}", p.X, p.Y)
+}
+
 func (p Point) LengthSq() float64 {
 	return p.X*p.X + p.Y*p.Y
 }
@@ -56,6 +65,23 @@ func (p Point) Angle() float64 {
 
 func (s LineSegment) GetVector() Vector2D {
 	return Vector2D{X: s.End.X - s.Begin.X, Y: s.End.Y - s.Begin.Y}
+}
+
+func (s LineSegment) GetNormalPoint(center Point) (p Point) {
+	Ax := s.Begin.X
+	Ay := s.Begin.Y
+
+	Bx := s.End.X
+	By := s.End.Y
+
+	Cx := center.X
+	Cy := center.Y
+
+	t := ((Cx-Ax)*(Bx-Ax) + (Cy-Ay)*(By-Ay)) / ((Bx-Ax)*(Bx-Ax) + (By-Ay)*(By-Ay))
+
+	p.X = Ax + t*(Bx-Ax)
+	p.Y = Ay + t*(By-Ay)
+	return
 }
 
 func (s LineSegment) LengthSq() float64 {
@@ -111,6 +137,14 @@ func (p *Point) Scale(factor float64) *Point {
 	return p
 }
 
+func (p *Point) Rotate(angle float64) *Point {
+	x := p.X*math.Cos(angle) - p.Y*math.Sin(angle)
+	y := p.X*math.Sin(angle) + p.Y*math.Cos(angle)
+	p.X = x
+	p.Y = y
+	return p
+}
+
 func (p1 *Point) AddInPlace(p2 Point) {
 	p1.X += p2.X
 	p1.Y += p2.Y
@@ -122,6 +156,14 @@ func (p1 Point) Add(p2 Point) Point {
 
 func (p1 Point) Sub(p2 Point) Point {
 	return Point{X: p1.X - p2.X, Y: p1.Y - p2.Y}
+}
+
+func MakeLineFromSegment(s LineSegment) (l Line) {
+	l.Origin = s.Begin
+	l.Vector = s.End.Sub(s.Begin)
+	l.Vector.Normalize()
+
+	return
 }
 
 func (l1 LineSegment) Intersect(l2 LineSegment) (Point, bool) {
@@ -145,6 +187,33 @@ func (l1 LineSegment) Intersect(l2 LineSegment) (Point, bool) {
 	p := Point{X: x, Y: y}
 
 	if l1.ToRect().HasPoint(p) && l2.ToRect().HasPoint(p) {
+		return p, true
+	}
+
+	return Point{}, false
+}
+
+func (l1 LineSegment) IntersectLine(l2 LineSegment) (Point, bool) {
+	xy12 := l1.Begin.X*l1.End.Y - l1.Begin.Y*l1.End.X
+	xy34 := l2.Begin.X*l2.End.Y - l2.Begin.Y*l2.End.X
+
+	x12 := l1.Begin.X - l1.End.X
+	x34 := l2.Begin.X - l2.End.X
+
+	y12 := l1.Begin.Y - l1.End.Y
+	y34 := l2.Begin.Y - l2.End.Y
+
+	denominator := x12*y34 - y12*x34
+	if denominator == 0 {
+		return Point{}, false
+	}
+
+	x := (xy12*x34 - x12*xy34) / denominator
+	y := (xy12*y34 - y12*xy34) / denominator
+
+	p := Point{X: x, Y: y}
+
+	if l1.ToRect().HasPoint(p) {
 		return p, true
 	}
 
