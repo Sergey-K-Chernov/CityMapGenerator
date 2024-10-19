@@ -131,6 +131,13 @@ func (p *Point) Normalize() *Point {
 	return p
 }
 
+func (p *Point) GetNormalized() Point {
+	length := math.Sqrt(p.X*p.X + p.Y*p.Y)
+	x := p.X / length
+	y := p.Y / length
+	return Point{X: x, Y: y}
+}
+
 func (p *Point) Scale(factor float64) *Point {
 	p.X *= factor
 	p.Y *= factor
@@ -156,6 +163,10 @@ func (p1 Point) Add(p2 Point) Point {
 
 func (p1 Point) Sub(p2 Point) Point {
 	return Point{X: p1.X - p2.X, Y: p1.Y - p2.Y}
+}
+
+func (p1 Vector2D) Dot(p2 Vector2D) float64 {
+	return p1.X*p2.X + p1.Y*p2.Y
 }
 
 func MakeLineFromSegment(s LineSegment) (l Line) {

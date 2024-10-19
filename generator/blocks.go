@@ -39,7 +39,7 @@ func GenerateBlocks(city_map Map, chan_map chan Map, initials InitialValuesBlock
 
 	for i, bc := range block_centers {
 		if i > 0 { // debug limit
-			break
+			//break
 		}
 		b := generateBlock(bc, city_map, initials)
 		blocks = append(blocks, b)
@@ -76,9 +76,15 @@ func cropBlock(center gm.Point, figure []gm.Point, city_map Map) []gm.Point {
 	for _, p := range figure {
 		println(p.X, p.Y)
 	}
+
+	max_radius := 0.0
+	for _, p := range figure {
+		max_radius = max(max_radius, p.Sub(center).Length())
+	}
+
 	for _, road := range city_map.Roads {
 		for i := range len(road.Points) - 1 {
-			figure = cutFigure(center, figure, gm.LineSegment{Begin: road.Points[i], End: road.Points[i+1]})
+			figure = cutFigure(center, figure, max_radius, gm.LineSegment{Begin: road.Points[i], End: road.Points[i+1]})
 		}
 	}
 	return figure
@@ -89,61 +95,18 @@ type Intersection struct {
 	point     gm.Point
 }
 
-func cutFigure(center gm.Point, figure []gm.Point, segment gm.LineSegment) []gm.Point {
-	croped := false
-	defer func(segment gm.LineSegment) {
-		if croped {
-			println("seg:")
-			println(segment.Begin.X, segment.Begin.Y)
-			println(segment.End.X, segment.End.Y)
-		}
-	}(segment)
-
+func cutFigure(center gm.Point, figure []gm.Point, max_radius float64, segment gm.LineSegment) []gm.Point {
+	// Находим перпендикуляр из центра на отрезок
 	np := segment.GetNormalPoint(center)
-	np = np.Sub(center)
+	n := np.Sub(center)
 
-	if np.LengthSq() == 0 {
-		np = segment.End.Sub(center)
-		np.Normalize()
-		np.Rotate(math.Pi / 2)
+	// Если больше расстояния до самого дальнего угла, игнорим
+	normal_length := n.Length()
+	if normal_length > max_radius {
+		return figure
 	}
 
-	// Смещаем и откладываем обратное смещение
-	segment.Begin = segment.Begin.Sub(center)
-	segment.End = segment.End.Sub(center)
-
-	for i := 0; i < len(figure); i++ {
-		figure[i] = figure[i].Sub(center)
-	}
-
-	defer func() {
-		for i := 0; i < len(figure); i++ {
-			figure[i] = figure[i].Add(center)
-		}
-	}()
-
-	// Поворачиваем и откладываем обратный поворот
-	angle := np.Angle()
-
-	segment.Begin.Rotate(-angle)
-	segment.End.Rotate(-angle)
-
-	if segment.Begin.Y > segment.End.Y {
-		segment.Begin, segment.End = segment.End, segment.Begin
-	}
-
-	for i := 0; i < len(figure); i++ {
-		figure[i].Rotate(-angle)
-	}
-
-	defer func() {
-		for i := 0; i < len(figure); i++ {
-			figure[i].Rotate(angle)
-		}
-	}()
-
-	// Пересекаем прямой. Получаем точки пересечения и индексы отрезков-сторон которые пересечены
-	// Почему не отрезком: если отрезок кончается внутри фигуры, мы все равно хотим отрезать.
+	// Находим пересечения отрезка с обеими сторонами
 	intersections := make([]Intersection, 0)
 	for i, p := range figure {
 		i_next := i + 1
@@ -151,81 +114,66 @@ func cutFigure(center gm.Point, figure []gm.Point, segment gm.LineSegment) []gm.
 			i_next = 0
 		}
 
-		point, ok := gm.LineSegment{Begin: p, End: figure[i_next]}.IntersectLine(segment)
-		if !ok {
-			continue
+		s := gm.LineSegment{Begin: p, End: figure[i_next]}
+		point, ok := s.IntersectLine(segment)
+		if ok {
+			intersections = append(intersections, Intersection{i: i, i_next: i_next, point: point})
 		}
-		intersections = append(intersections, Intersection{i: i, i_next: i_next, point: point})
 	}
 
 	if len(intersections) < 2 {
 		return figure
 	}
 
-	if len(intersections) > 2 {
-		println("Error! Non-convex figure")
-	}
-	// Проверяем, пересекает ли отрезок:
-	// 	Если нижняя точка отрезка выше верхней точки пересечения прямой, то нет
-	//	Если верхняя точка отрезка ниже нижней точки пересечения прямой, то нет
+	// Проверяем, находятся ли точки перечечения внутри отрезка
+	line_vec := segment.End.Sub(segment.Begin)
+	line_vec_ort := line_vec.GetNormalized()
+	ok := false
+	for i := 0; i < len(intersections); i++ {
+		isec_vec := intersections[i].point.Sub(segment.Begin)
 
-	if intersections[0].point.Y < intersections[1].point.Y {
-		intersections[0], intersections[1] = intersections[1], intersections[0]
+		projection := line_vec_ort.Dot(isec_vec)
+		if projection > 0 && projection < line_vec.Length() {
+			ok = true
+			break
+		}
 	}
 
-	if segment.Begin.Y > intersections[0].point.Y || segment.End.Y < intersections[1].point.Y {
+	if !ok {
 		return figure
 	}
-	println()
 
-	// Иначе есть пересечения. Режем:
+	slices.SortFunc(intersections, func(a, b Intersection) int {
+		if a.i_next < b.i_next {
+			return 1
+		}
+		if a.i_next > b.i_next {
+			return -1
+		}
+		return 0
+	})
 
-	figure = cutPoints(figure, intersections)
-
-	croped = true
-	return figure
-	// При выходе deferred обратно вращают и смещают нас.
-}
-
-func cutPoints(figure []gm.Point, intersections []Intersection) []gm.Point {
-	// Sort by increase
-	if intersections[0].i < intersections[1].i {
-		intersections[0], intersections[1] = intersections[1], intersections[0]
+	// Вставляем точки в фигуру
+	for _, isec := range intersections {
+		figure = slices.Insert(figure, isec.i_next, isec.point)
 	}
 
-	remove_begin := -1
-	remove_end := -1
+	// Находим проекции каждой точки на перпендикуляр. Если отрицательные, игнорим
 
-	figure = slices.Insert(figure, intersections[0].i_next, intersections[0].point)
-	if figure[intersections[0].i_next].X > intersections[0].point.X {
-		remove_begin = intersections[0].i_next + 1
-	} else {
-		remove_end = intersections[0].i
-	}
-
-	if figure[intersections[1].i_next].X > intersections[1].point.X {
-		// Второе пересечениие. Если вправо, вставляем по правому индексу
-		figure = slices.Insert(figure, intersections[1].i_next, intersections[1].point)
-
-		// На удаление помечаем следующий за правым, начало
-		remove_begin = intersections[1].i_next + 1
-	} else {
-		// Если влево, то по левому.
-		figure = slices.Insert(figure, intersections[1].i, intersections[1].point)
-
-		// На удаление помечаем предыдущий перед левым, конец
-		remove_end = intersections[1].i - 1
-	}
-
-	if remove_begin > remove_end {
-		figure = slices.Delete(figure, remove_begin, len(figure))
-		figure = slices.Delete(figure, 0, remove_end)
-	} else {
-		figure = slices.Delete(figure, remove_begin, remove_end)
+	ortho := gm.Line{Origin: center, Vector: n.GetNormalized()}
+	nlen := n.Length()
+	for i := len(figure) - 1; i >= 0; i-- {
+		vec_to_corner := figure[i].Sub(center)
+		projection := ortho.Vector.Dot(vec_to_corner)
+		if gm.AlmostEqual(projection, nlen, 0.0000001) {
+			continue
+		}
+		if projection > nlen { // < 0 is automacitally < length
+			figure = slices.Delete(figure, i, i+1)
+		}
 	}
 
 	return figure
-	//figure = slices.Insert(figure, , )
 }
 
 func calcArea(city_map Map) float64 {

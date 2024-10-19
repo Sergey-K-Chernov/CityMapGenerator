@@ -97,6 +97,7 @@ func connectCenters(centers []gm.Point) (roads []Road) {
 		for j := i + 1; j < len(centers); j++ {
 			rd.Points = append(rd.Points, centers[j])
 		}
+		rd.Points = append(rd.Points, centers[i])
 		roads = append(roads, rd)
 	}
 	return
