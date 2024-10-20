@@ -41,15 +41,15 @@ func GenerateBlocks(city_map Map, chan_map chan Map, initials InitialValuesBlock
 	block_centers := generateRandomPointsInsideCity(n_blocks, city_map)
 	blocks, blocks_area = GenerateBlocksInPoints(block_centers, city_map, initials, blocks)
 
+	// fill gaps with less randomly generated blocks
 	for i_step := 1; blocks_area < city_area*0.95; i_step++ {
 		block_centers = generateConcentricPointsInsideCity(city_map, initials, i_step, blocks)
 		var area float64
 		blocks, area = GenerateBlocksInPoints(block_centers, city_map, initials, blocks)
 		blocks_area += area
 	}
-	// fill gaps with less randomly generated blocks
 
-	//chan_map <- city_map
+	chan_map <- city_map
 	return blocks
 }
 
@@ -132,12 +132,14 @@ func generateBlock(center gm.Point, city_map Map, initials InitialValuesBlocks, 
 }
 
 func cropBlockByRoads(center gm.Point, figure []gm.Point, city_map Map) []gm.Point {
-	println("center")
-	println(center.X, center.Y)
-	println("figure")
-	for _, p := range figure {
-		println(p.X, p.Y)
-	}
+	/*
+		println("center")
+		println(center.X, center.Y)
+		println("figure")
+		for _, p := range figure {
+			println(p.X, p.Y)
+		}
+	*/
 
 	max_radius := 0.0
 	for _, p := range figure {
@@ -327,32 +329,42 @@ func generateConcentricPointsInsideCity(city_map Map, initials InitialValuesBloc
 	}
 
 	step := (initials.Size.Min + initials.Size.Max) / float64(i_step)
+
+	var wg sync.WaitGroup
+	var mutex sync.Mutex
+
 	for radius := 0.0; radius < max_radius; radius += step {
 		angle_step := 2 * math.Atan2(step, radius)
 
 		for angle := 0.0; angle < 2*math.Pi; angle += angle_step {
-			point := gm.Point{X: radius, Y: 0}
-			point.Rotate(angle)
-			point.AddInPlace(city_map.Center)
-			point.AddInPlace(generateRadialRandomPoint(0, 2*math.Pi, step/8, step/4))
+			func(radius, angle float64) {
+				wg.Add(1)
+				defer wg.Done()
 
-			if !check_inside_borders(point, city_map) {
-				continue
-			}
+				point := gm.Point{X: radius, Y: 0}
+				point.Rotate(angle)
+				point.AddInPlace(city_map.Center)
+				point.AddInPlace(generateRadialRandomPoint(0, 2*math.Pi, step/8, step/4))
 
-			inside := false
-			for _, block := range blocks {
-				if checkPointInsidePolygon(point, block.Points) {
-					inside = true
-					break
+				if !check_inside_borders(point, city_map) {
+					return
 				}
-			}
 
-			if !inside {
+				for _, block := range blocks {
+					if checkPointInsidePolygon(point, block.Points) {
+						return
+					}
+				}
+
+				mutex.Lock()
 				points = append(points, point)
-			}
+				mutex.Unlock()
+
+			}(radius, angle)
 		}
 	}
+
+	wg.Wait()
 
 	return
 }
