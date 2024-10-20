@@ -93,11 +93,11 @@ func drawBlocks(ops *op.Ops, data *mapData, scale float64) {
 				Path:  path.End(),
 				Width: 2,
 			}.Op())
-
-		for i, p := range block.Points {
-			clr := uint8(float64(i) / float64(len(block.Points)) * 255)
-			drawDebugVertex(ops, p, clr, scale)
-		}
+		/*
+			for i, p := range block.Points {
+				clr := uint8(float64(i) / float64(len(block.Points)) * 255)
+				drawDebugVertex(ops, p, clr, scale)
+			}*/
 	}
 }
 

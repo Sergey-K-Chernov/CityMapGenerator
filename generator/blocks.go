@@ -32,23 +32,42 @@ import (
 */
 
 func GenerateBlocks(city_map Map, chan_map chan Map, initials InitialValuesBlocks) (blocks []Block) {
-	city_area := calcArea(city_map)
+	city_area := calcArea(city_map.BorderPoints, city_map.Center)
 	n_blocks := estimateNumberOfBlocks(city_area, initials)
 
-	block_centers := generatePointsInsideCity(n_blocks, city_map)
+	blocks_area := 0.0
+
+	// genetare initial set of blocks, random
+	block_centers := generateRandomPointsInsideCity(n_blocks, city_map)
+	blocks, blocks_area = GenerateBlocksInPoints(block_centers, city_map, initials, blocks)
+
+	for i_step := 1; blocks_area < city_area*0.9; i_step++ {
+		block_centers = generateConcentricPointsInsideCity(city_map, initials, i_step, blocks)
+		var area float64
+		blocks, area = GenerateBlocksInPoints(block_centers, city_map, initials, blocks)
+		blocks_area += area
+	}
+	// fill gaps with less randomly generated blocks
+
+	//chan_map <- city_map
+	return blocks
+}
+
+func GenerateBlocksInPoints(block_centers []gm.Point, city_map Map, initials InitialValuesBlocks, blocks []Block) ([]Block, float64) {
+	area := 0.0
 
 	for i := 0; i < len(block_centers); i++ {
 		bc := block_centers[i]
 		if i > 0 { // debug limit
 			//break
 		}
-		b := generateBlock(bc, city_map, initials)
+		b := generateBlock(bc, city_map, initials, blocks)
 		blocks = append(blocks, b)
 		block_centers = removePointsInsideFigure(block_centers, b.Points)
+		area += calcArea(b.Points, b.Center)
 	}
 
-	//chan_map <- city_map
-	return blocks
+	return blocks, area
 }
 
 func removePointsInsideFigure(points, figure []gm.Point) []gm.Point {
@@ -89,7 +108,7 @@ func isPointInsideFigure(point gm.Point, figure []gm.Point) bool {
 	return (numberOfRayIntersections%2 != 0)
 }
 
-func generateBlock(center gm.Point, city_map Map, initials InitialValuesBlocks) (b Block) {
+func generateBlock(center gm.Point, city_map Map, initials InitialValuesBlocks, blocks []Block) (b Block) {
 	side_1 := gm.RandFloat(initials.Size.Min, initials.Size.Max)
 	side_2 := gm.RandFloat(initials.Size.Min, initials.Size.Max)
 	angle := gm.RandFloat(0, 2*math.Pi)
@@ -106,12 +125,13 @@ func generateBlock(center gm.Point, city_map Map, initials InitialValuesBlocks) 
 		b.Points[i].AddInPlace(center)
 	}
 
-	b.Points = cropBlock(b.Center, b.Points, city_map)
+	b.Points = cropBlockByRoads(b.Center, b.Points, city_map)
+	b.Points = cropBlockByBlocks(b.Center, b.Points, blocks)
 
 	return
 }
 
-func cropBlock(center gm.Point, figure []gm.Point, city_map Map) []gm.Point {
+func cropBlockByRoads(center gm.Point, figure []gm.Point, city_map Map) []gm.Point {
 	println("center")
 	println(center.X, center.Y)
 	println("figure")
@@ -128,6 +148,31 @@ func cropBlock(center gm.Point, figure []gm.Point, city_map Map) []gm.Point {
 		for i := range len(road.Points) - 1 {
 			figure = cutFigure(center, figure, max_radius, gm.LineSegment{Begin: road.Points[i], End: road.Points[i+1]})
 		}
+	}
+	return figure
+}
+
+func cropBlockByBlocks(center gm.Point, figure []gm.Point, blocks []Block) []gm.Point {
+	for _, b := range blocks {
+		figure = cropBlockByBlock(center, figure, b)
+	}
+	return figure
+}
+
+func cropBlockByBlock(center gm.Point, figure []gm.Point, block Block) []gm.Point {
+	max_radius := 0.0
+	for _, p := range figure {
+		max_radius = max(max_radius, p.Sub(center).Length())
+	}
+
+	for i := 0; i < len(block.Points); i++ {
+		i_next := i + 1
+		if i_next == len(block.Points) {
+			i_next = 0
+		}
+
+		s := gm.LineSegment{Begin: block.Points[i], End: block.Points[i_next]}
+		figure = cutFigure(center, figure, max_radius, s)
 	}
 	return figure
 }
@@ -218,20 +263,18 @@ func cutFigure(center gm.Point, figure []gm.Point, max_radius float64, segment g
 	return figure
 }
 
-func calcArea(city_map Map) float64 {
-	bp := city_map.BorderPoints
-
+func calcArea(polygon []gm.Point, center gm.Point) float64 {
 	area := 0.0
-	for i := range bp {
+	for i := range polygon {
 		i_plus_1 := i + 1
-		if i_plus_1 == len(bp) {
+		if i_plus_1 == len(polygon) {
 			i_plus_1 = 0
 		}
 
 		// Heron's formula
-		a := bp[i].Sub(bp[i_plus_1]).Length()
-		b := bp[i].Sub(city_map.Center).Length()
-		c := bp[i_plus_1].Sub(city_map.Center).Length()
+		a := polygon[i].Sub(polygon[i_plus_1]).Length()
+		b := polygon[i].Sub(center).Length()
+		c := polygon[i_plus_1].Sub(center).Length()
 		p := (a + b + c) / 2
 
 		area += math.Sqrt(p * (p - a) * (p - b) * (p - c))
@@ -246,12 +289,12 @@ func estimateNumberOfBlocks(area float64, initials InitialValuesBlocks) int {
 	avg_square_block_area := avg_block_side * avg_block_side
 
 	// arbitrary:
-	est_block_area := avg_square_block_area /* * (max_ratio / 3)*/
+	est_block_area := avg_square_block_area * 0.7 /* * (max_ratio / 3)*/
 
 	return int(area / est_block_area)
 }
 
-func generatePointsInsideCity(qty int, city_map Map) []gm.Point {
+func generateRandomPointsInsideCity(qty int, city_map Map) []gm.Point {
 	rect := get_map_rect(city_map)
 
 	var wg sync.WaitGroup
@@ -275,6 +318,43 @@ func generatePointsInsideCity(qty int, city_map Map) []gm.Point {
 
 	wg.Wait()
 	return points
+}
+
+func generateConcentricPointsInsideCity(city_map Map, initials InitialValuesBlocks, i_step int, blocks []Block) (points []gm.Point) {
+	max_radius := 0.0
+	for _, p := range city_map.BorderPoints {
+		max_radius = max(max_radius, p.Sub(city_map.Center).Length())
+	}
+
+	step := (initials.Size.Min + initials.Size.Max) / float64(i_step)
+	for radius := 0.0; radius < max_radius; radius += step {
+		angle_step := 2 * math.Atan2(step, radius)
+
+		for angle := 0.0; angle < 2*math.Pi; angle += angle_step {
+			point := gm.Point{X: radius, Y: 0}
+			point.Rotate(angle)
+			point.AddInPlace(city_map.Center)
+			point.AddInPlace(generateRadialRandomPoint(0, 2*math.Pi, step/8, step/4))
+
+			if !check_inside_borders(point, city_map) {
+				continue
+			}
+
+			inside := false
+			for _, block := range blocks {
+				if checkPointInsidePolygon(point, block.Points) {
+					inside = true
+					break
+				}
+			}
+
+			if !inside {
+				points = append(points, point)
+			}
+		}
+	}
+
+	return
 }
 
 func get_map_rect(city_map Map) (rect gm.Rect) {

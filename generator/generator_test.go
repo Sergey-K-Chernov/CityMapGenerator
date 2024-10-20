@@ -286,3 +286,42 @@ func TestCutFigure(t *testing.T) {
 	}
 
 }
+
+func TestCropBlockByBlocks(t *testing.T) {
+	block1 := []gm.Point{
+		{X: 2166.407, Y: 1666.528},
+		{X: 2203.204, Y: 1358.976},
+		{X: 2100.28, Y: 1346.662},
+		{X: 2063.483, Y: 1654.214},
+	}
+
+	center1 := gm.Point{X: 2133.343, Y: 1506.595}
+
+	block2 := []gm.Point{
+		{X: 2112.96, Y: 1096.496},
+		{X: 1803.338, Y: 1426.942},
+		{X: 1988.472, Y: 1600.409},
+		{X: 2298.094, Y: 1269.964},
+	}
+	center2 := gm.Point{X: 2050.716, Y: 1348.453}
+
+	answer := []gm.Point{
+		{X: 2112.96, Y: 1096.496},
+		{X: 1803.338, Y: 1426.942},
+		{X: 1988.472, Y: 1600.409},
+
+		{X: 2081.8815, Y: 1500.438},
+		{X: 2100.28, Y: 1346.662},
+		{X: 2203.204, Y: 1358.976},
+		{X: 2201.522483, Y: 1373.030238},
+
+		{X: 2298.094, Y: 1269.964},
+	}
+
+	println(block1)
+	println(center1)
+	println(block2)
+	println(center2)
+
+	t.Fatalf("Test unfinished")
+}
