@@ -41,7 +41,7 @@ func GenerateBlocks(city_map Map, chan_map chan Map, initials InitialValuesBlock
 	block_centers := generateRandomPointsInsideCity(n_blocks, city_map)
 	blocks, blocks_area = GenerateBlocksInPoints(block_centers, city_map, initials, blocks)
 
-	for i_step := 1; blocks_area < city_area*0.9; i_step++ {
+	for i_step := 1; blocks_area < city_area*0.95; i_step++ {
 		block_centers = generateConcentricPointsInsideCity(city_map, initials, i_step, blocks)
 		var area float64
 		blocks, area = GenerateBlocksInPoints(block_centers, city_map, initials, blocks)
