@@ -37,22 +37,64 @@ func GenerateBlocks(city_map Map, chan_map chan Map, initials InitialValuesBlock
 
 	block_centers := generatePointsInsideCity(n_blocks, city_map)
 
-	for i, bc := range block_centers {
+	for i := 0; i < len(block_centers); i++ {
+		bc := block_centers[i]
 		if i > 0 { // debug limit
 			//break
 		}
 		b := generateBlock(bc, city_map, initials)
 		blocks = append(blocks, b)
+		block_centers = removePointsInsideFigure(block_centers, b.Points)
 	}
 
 	//chan_map <- city_map
 	return blocks
 }
 
+func removePointsInsideFigure(points, figure []gm.Point) []gm.Point {
+	for i := 0; i < len(points); {
+		if isPointInsideFigure(points[i], figure) {
+			points = slices.Delete(points, i, i+1)
+		} else {
+			i++
+		}
+	}
+	return points
+}
+
+func isPointInsideFigure(point gm.Point, figure []gm.Point) bool {
+	line := gm.LineSegment{Begin: point, End: point.Add(gm.Point{X: 1, Y: 0})}
+
+	intersections := make([]gm.Point, 0)
+	for i := range figure {
+		i_next := i + 1
+		if i_next == len(figure) {
+			i_next = 0
+		}
+		s := gm.LineSegment{Begin: figure[i], End: figure[i_next]}
+
+		isec, ok := s.IntersectLine(line)
+		if ok {
+			intersections = append(intersections, isec)
+		}
+	}
+
+	numberOfRayIntersections := 0
+	for _, isec := range intersections {
+		if isec.X > point.X {
+			numberOfRayIntersections++
+		}
+	}
+
+	return (numberOfRayIntersections%2 != 0)
+}
+
 func generateBlock(center gm.Point, city_map Map, initials InitialValuesBlocks) (b Block) {
 	side_1 := gm.RandFloat(initials.Size.Min, initials.Size.Max)
 	side_2 := gm.RandFloat(initials.Size.Min, initials.Size.Max)
 	angle := gm.RandFloat(0, 2*math.Pi)
+
+	b.Center = center
 
 	b.Points = append(b.Points, gm.Point{X: side_1 / 2, Y: side_2 / 2})
 	b.Points = append(b.Points, gm.Point{X: side_1 / 2, Y: -side_2 / 2})
@@ -64,7 +106,7 @@ func generateBlock(center gm.Point, city_map Map, initials InitialValuesBlocks) 
 		b.Points[i].AddInPlace(center)
 	}
 
-	b.Points = cropBlock(center, b.Points, city_map)
+	b.Points = cropBlock(b.Center, b.Points, city_map)
 
 	return
 }

@@ -37,5 +37,6 @@ type Road struct {
 }
 
 type Block struct {
+	Center genmath.Point
 	Points []genmath.Point
 }
