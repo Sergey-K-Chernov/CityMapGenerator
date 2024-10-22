@@ -65,9 +65,15 @@ func run(window *app.Window) error {
 				settings.borders = true
 				settings.center = true
 			} else {
-				settings.greenfill = true
+
 				settings.borders = false
 				settings.center = false
+
+				if len(data.cityMap.Blocks) == 0 {
+					settings.greenfill = false
+				} else {
+					settings.greenfill = true
+				}
 			}
 
 			tryDrawMap(&ops, gtx, &data, settings)

@@ -114,11 +114,12 @@ func drawAreas(ops *op.Ops, data *mapData, scale float64) {
 		if area.Type == generator.AreaPark {
 			paint.FillShape(ops, light_green, clip.Outline{Path: path.End()}.Op())
 		}
-
-		for i, p := range area.Points {
-			clr := uint8(float64(i) / float64(len(area.Points)) * 255)
-			drawDebugVertex(ops, p, clr, scale)
-		}
+		/*
+			for i, p := range area.Points {
+				clr := uint8(float64(i) / float64(len(area.Points)) * 255)
+				drawDebugVertex(ops, p, clr, scale)
+			}
+		*/
 	}
 
 }
