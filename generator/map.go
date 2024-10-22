@@ -54,6 +54,7 @@ const (
 type Area struct {
 	Points []genmath.Point
 	Type   AreaType
+	Area   float64
 }
 
 type Block struct {

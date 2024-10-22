@@ -33,6 +33,11 @@ import (
 
 func GenerateBlocks(city_map Map, chan_map chan Map, initials InitialValuesBlocks) (blocks []Block) {
 	city_area := calcArea(city_map.BorderPoints, city_map.Center)
+
+	for _, a := range city_map.Areas {
+		city_area -= a.Area
+	}
+
 	n_blocks := estimateNumberOfBlocks(city_area, initials)
 
 	blocks_area := 0.0
@@ -309,7 +314,7 @@ func generateRandomPointsInsideCity(qty int, city_map Map) []gm.Point {
 			x := gm.RandFloat(rect.Left, rect.Right)
 			y := gm.RandFloat(rect.Bottom, rect.Top)
 			p := gm.Point{X: x, Y: y}
-			for !check_inside_borders(p, city_map) {
+			for !check_inside_borders(p, city_map) || checkInsideAreas(p, city_map) {
 				x = gm.RandFloat(rect.Left, rect.Right)
 				y = gm.RandFloat(rect.Bottom, rect.Top)
 				p = gm.Point{X: x, Y: y}
@@ -320,6 +325,15 @@ func generateRandomPointsInsideCity(qty int, city_map Map) []gm.Point {
 
 	wg.Wait()
 	return points
+}
+
+func checkInsideAreas(point gm.Point, city_map Map) bool {
+	for _, area := range city_map.Areas {
+		if checkPointInsidePolygon(point, area.Points) {
+			return true
+		}
+	}
+	return false
 }
 
 func generateConcentricPointsInsideCity(city_map Map, initials InitialValuesBlocks, i_step int, blocks []Block) (points []gm.Point) {
@@ -348,6 +362,12 @@ func generateConcentricPointsInsideCity(city_map Map, initials InitialValuesBloc
 
 				if !check_inside_borders(point, city_map) {
 					return
+				}
+
+				for _, area := range city_map.Areas {
+					if checkPointInsidePolygon(point, area.Points) {
+						return
+					}
 				}
 
 				for _, block := range blocks {

@@ -135,5 +135,6 @@ func generateArea(target_area float64) Area {
 		area.Points[i].Scale(scale)
 	}
 
+	area.Area = calcArea(area.Points, gm.Point{X: 0, Y: 0})
 	return area
 }
