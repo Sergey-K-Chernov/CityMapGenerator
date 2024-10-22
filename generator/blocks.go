@@ -55,7 +55,9 @@ func GenerateBlocks(city_map Map, chan_map chan Map, initials InitialValuesBlock
 	}
 
 	for i := range blocks {
-		blocks[i] = generateStreets(blocks[i], initials.Size.Min*2, initials.Size.Max/2)
+		go func() {
+			blocks[i] = generateStreets(blocks[i], initials.Size.Min*2, initials.Size.Max/2)
+		}()
 	}
 
 	//chan_map <- city_map
