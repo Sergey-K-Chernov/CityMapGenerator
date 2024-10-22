@@ -491,7 +491,7 @@ func generateStreets(block Block, min_dist, max_dist float64) Block {
 
 	dist := gm.RandFloat(min_dist, max_dist/3)
 	for shift := -max_length - min_dist/3; shift < max_length; shift += dist {
-		shift_point := gm.Point{X: shift, Y: 0}
+		shift_point := gm.Point{X: shift + gm.RandFloat(-shift/2, shift/2), Y: 0}
 		shift_point.Rotate(block.Angle + math.Pi/2)
 
 		street, ok := tryMakeStreet(p1, p2, shift_point, block)
@@ -504,7 +504,7 @@ func generateStreets(block Block, min_dist, max_dist float64) Block {
 
 	dist = gm.RandFloat(max_dist/3, max_dist)
 	for shift := -max_length - min_dist/3; shift < max_length; shift += dist {
-		shift_point := gm.Point{X: shift, Y: 0}
+		shift_point := gm.Point{X: shift + gm.RandFloat(-shift/2, shift/2), Y: 0}
 		shift_point.Rotate(block.Angle)
 
 		street, ok := tryMakeStreet(p3, p4, shift_point, block)
