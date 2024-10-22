@@ -58,6 +58,8 @@ type Area struct {
 }
 
 type Block struct {
-	Center genmath.Point
-	Points []genmath.Point
+	Center  genmath.Point
+	Points  []genmath.Point
+	Angle   float64
+	Streets []genmath.LineSegment
 }

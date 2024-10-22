@@ -141,12 +141,31 @@ func drawBlocks(ops *op.Ops, data *mapData, scale float64) {
 				Width: 1.5,
 			}.Op())
 
+		drawStreets(ops, block.Streets, scale)
 		/*
 			for i, p := range block.Points {
 				clr := uint8(float64(i) / float64(len(block.Points)) * 255)
 				drawDebugVertex(ops, p, clr, scale)
 			}*/
 	}
+}
+
+func drawStreets(ops *op.Ops, streets []genmath.LineSegment, scale float64) {
+	points := make([]genmath.Point, 2)
+
+	for _, str := range streets {
+		points[0] = str.Begin
+		points[1] = str.End
+
+		path := preparePath(ops, points, scale)
+		black := color.NRGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}
+		paint.FillShape(ops, black,
+			clip.Stroke{
+				Path:  path.End(),
+				Width: 1,
+			}.Op())
+	}
+
 }
 
 func drawDebugVertex(ops *op.Ops, p genmath.Point, clr uint8, scale float64) {

@@ -47,14 +47,18 @@ func GenerateBlocks(city_map Map, chan_map chan Map, initials InitialValuesBlock
 	blocks, blocks_area = GenerateBlocksInPoints(block_centers, city_map, initials, blocks)
 
 	// fill gaps with less randomly generated blocks
-	for i_step := 1; blocks_area < city_area*0.95; i_step++ {
+	for i_step := 1; blocks_area < city_area*0.98; i_step++ {
 		block_centers = generateConcentricPointsInsideCity(city_map, initials, i_step, blocks)
 		var area float64
 		blocks, area = GenerateBlocksInPoints(block_centers, city_map, initials, blocks)
 		blocks_area += area
 	}
 
-	chan_map <- city_map
+	for i := range blocks {
+		blocks[i] = generateStreets(blocks[i], initials.Size.Min*2, initials.Size.Max/2)
+	}
+
+	//chan_map <- city_map
 	return blocks
 }
 
@@ -129,6 +133,7 @@ func generateBlock(center gm.Point, city_map Map, initials InitialValuesBlocks, 
 		b.Points[i].Rotate(angle)
 		b.Points[i].AddInPlace(center)
 	}
+	b.Angle = angle
 
 	b.Points = cropBlockByRoads(b.Center, b.Points, city_map)
 	b.Points = cropBlockByBlocks(b.Center, b.Points, blocks)
@@ -457,4 +462,79 @@ func checkXRayIntersectsSection(p, a, b gm.Point) int {
 	}
 
 	return 1
+}
+
+func generateStreets(block Block, min_dist, max_dist float64) Block {
+	max_length := 0.0
+	for _, p := range block.Points {
+		max_length = max(max_length, p.Sub(block.Center).Length())
+	}
+
+	base_point := gm.Point{X: max_length * 2, Y: 0}
+	p1 := base_point
+	p2 := base_point
+	p3 := base_point
+	p4 := base_point
+
+	p1.Rotate(block.Angle)
+	p2.Rotate(block.Angle + math.Pi)
+
+	p3.Rotate(block.Angle + math.Pi/2)
+	p4.Rotate(block.Angle + 3*math.Pi/2)
+
+	p1.AddInPlace(block.Center)
+	p2.AddInPlace(block.Center)
+	p3.AddInPlace(block.Center)
+	p4.AddInPlace(block.Center)
+
+	dist := gm.RandFloat(min_dist, max_dist/3)
+	for shift := -max_length - min_dist/3; shift < max_length; shift += dist {
+		shift_point := gm.Point{X: shift, Y: 0}
+		shift_point.Rotate(block.Angle + math.Pi/2)
+
+		street, ok := tryMakeStreet(p1, p2, shift_point, block)
+
+		if ok {
+			block.Streets = append(block.Streets, street)
+		}
+
+	}
+
+	dist = gm.RandFloat(max_dist/3, max_dist)
+	for shift := -max_length - min_dist/3; shift < max_length; shift += dist {
+		shift_point := gm.Point{X: shift, Y: 0}
+		shift_point.Rotate(block.Angle)
+
+		street, ok := tryMakeStreet(p3, p4, shift_point, block)
+
+		if ok {
+			block.Streets = append(block.Streets, street)
+		}
+
+	}
+
+	return block
+}
+
+func tryMakeStreet(p1, p2, shift_point gm.Point, block Block) (gm.LineSegment, bool) {
+	street := gm.LineSegment{Begin: p1.Add(shift_point), End: p2.Add(shift_point)}
+
+	points := make([]gm.Point, 0)
+	for i := range block.Points {
+		i_next := i + 1
+		if i_next == len(block.Points) {
+			i_next = 0
+		}
+
+		s := gm.LineSegment{Begin: block.Points[i], End: block.Points[i_next]}
+
+		p, ok := s.Intersect(street)
+		if ok {
+			points = append(points, p)
+		}
+	}
+	if len(points) == 2 {
+		return gm.LineSegment{Begin: points[0], End: points[1]}, true
+	}
+	return gm.LineSegment{Begin: gm.Point{X: 0, Y: 0}, End: gm.Point{X: 0, Y: 0}}, false
 }
