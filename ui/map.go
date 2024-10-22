@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"math"
 
+	"chirrwick.com/projects/city/generator"
 	"chirrwick.com/projects/city/generator/genmath"
 	"gioui.org/f32"
 	"gioui.org/op"
@@ -13,7 +14,13 @@ import (
 	"gioui.org/op/paint"
 )
 
-func tryDrawMap(ops *op.Ops, gtx GC, data *mapData) {
+type DrawSettings struct {
+	borders   bool
+	greenfill bool
+	center    bool
+}
+
+func tryDrawMap(ops *op.Ops, gtx GC, data *mapData, settings DrawSettings) {
 	select {
 	case data.cityMap = <-data.channel:
 		fmt.Print("Got new map\n")
@@ -27,10 +34,13 @@ func tryDrawMap(ops *op.Ops, gtx GC, data *mapData) {
 
 	scale := calcScale(gtx, data.cityMap.BorderPoints)
 
-	drawBorders(ops, data.cityMap.BorderPoints, scale)
-	drawRoads(ops, data, scale)
+	drawBorders(ops, data.cityMap.BorderPoints, scale, settings)
+	drawAreas(ops, data, scale)
 	drawBlocks(ops, data, scale)
-	drawCenter(ops, data, scale)
+	drawRoads(ops, data, scale)
+	if settings.center {
+		drawCenter(ops, data, scale)
+	}
 
 }
 
@@ -50,15 +60,23 @@ func calcScale(gtx GC, points []genmath.Point) float64 {
 	return math.Min(float64(mapConstraints.X)/max_map.X, float64(mapConstraints.Y)/max_map.Y)
 }
 
-func drawBorders(ops *op.Ops, points []genmath.Point, scale float64) {
-	path := preparePath(ops, points, scale)
+func drawBorders(ops *op.Ops, points []genmath.Point, scale float64, settings DrawSettings) {
+	if settings.greenfill {
+		path := preparePath(ops, points, scale)
+		light_green := color.NRGBA{R: 0xDD, G: 0xFF, B: 0xDD, A: 0xFF}
+		area := clip.Outline{Path: path.End()}.Op()
+		paint.FillShape(ops, light_green, area)
+	}
 
-	dark_red := color.NRGBA{R: 0x60, A: 0xFF}
-	paint.FillShape(ops, dark_red,
-		clip.Stroke{
-			Path:  path.End(),
-			Width: 2,
-		}.Op())
+	if settings.borders {
+		path := preparePath(ops, points, scale)
+		dark_red := color.NRGBA{R: 0x60, A: 0xFF}
+		paint.FillShape(ops, dark_red,
+			clip.Stroke{
+				Path:  path.End(),
+				Width: 2,
+			}.Op())
+	}
 }
 
 func drawRoads(ops *op.Ops, data *mapData, scale float64) {
@@ -69,14 +87,40 @@ func drawRoads(ops *op.Ops, data *mapData, scale float64) {
 	for _, rd := range data.cityMap.Roads {
 		path := preparePath(ops, rd.Points, scale)
 
-		dark_blue := color.NRGBA{B: 0x60, A: 0xFF}
-		paint.FillShape(ops, dark_blue,
+		black := color.NRGBA{A: 0xFF}
+		paint.FillShape(ops, black,
 			clip.Stroke{
 				Path:  path.End(),
 				Width: 2,
 			}.Op())
 
 	}
+}
+
+func drawAreas(ops *op.Ops, data *mapData, scale float64) {
+	if len(data.cityMap.Areas) <= 0 {
+		return
+	}
+
+	for _, area := range data.cityMap.Areas {
+		path := preparePath(ops, area.Points, scale)
+
+		grey := color.NRGBA{R: 0xDD, G: 0xDD, B: 0xDD, A: 0xFF}
+		light_green := color.NRGBA{R: 0xDD, G: 0xFF, B: 0xDD, A: 0xFF}
+
+		if area.Type == generator.AreaIndustrial {
+			paint.FillShape(ops, grey, clip.Outline{Path: path.End()}.Op())
+		}
+		if area.Type == generator.AreaPark {
+			paint.FillShape(ops, light_green, clip.Outline{Path: path.End()}.Op())
+		}
+
+		for i, p := range area.Points {
+			clr := uint8(float64(i) / float64(len(area.Points)) * 255)
+			drawDebugVertex(ops, p, clr, scale)
+		}
+	}
+
 }
 
 func drawBlocks(ops *op.Ops, data *mapData, scale float64) {
@@ -86,13 +130,17 @@ func drawBlocks(ops *op.Ops, data *mapData, scale float64) {
 
 	for _, block := range data.cityMap.Blocks {
 		path := preparePath(ops, block.Points, scale)
+		pale_orange := color.NRGBA{R: 0xFF, G: 0xF6, B: 0xDD, A: 0xFF}
+		paint.FillShape(ops, pale_orange, clip.Outline{Path: path.End()}.Op())
 
-		dark_blue := color.NRGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}
-		paint.FillShape(ops, dark_blue,
+		path = preparePath(ops, block.Points, scale)
+		black := color.NRGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}
+		paint.FillShape(ops, black,
 			clip.Stroke{
 				Path:  path.End(),
-				Width: 2,
+				Width: 1.5,
 			}.Op())
+
 		/*
 			for i, p := range block.Points {
 				clr := uint8(float64(i) / float64(len(block.Points)) * 255)

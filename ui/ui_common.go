@@ -20,6 +20,7 @@ type uiPage int
 const (
 	genBordersPage uiPage = iota
 	genCentersAndRoadsPage
+	genBigAreasPage
 	genBlocksPage
 	genStreetsPage
 )
@@ -51,12 +52,14 @@ type uiPages struct {
 func makeUi() uiPages {
 	bordersPage := createBordersPage()
 	centersRoadsPage := createCentersAndRoadsPage()
+	bigAreasPage := createBigAreasPage()
 	blocksPage := createBlocksPage()
 
 	var ui uiPages
-	ui.pages = make([]uiLayouter, 3)
+	ui.pages = make([]uiLayouter, 4)
 	ui.pages[genBordersPage] = &bordersPage
 	ui.pages[genCentersAndRoadsPage] = &centersRoadsPage
+	ui.pages[genBigAreasPage] = &bigAreasPage
 	ui.pages[genBlocksPage] = &blocksPage
 	ui.currentPage = genBordersPage
 

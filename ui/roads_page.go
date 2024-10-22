@@ -19,6 +19,7 @@ type uiCentersAndRoadsPage struct {
 
 	btnGenerate button
 	btnAccept   button
+	btnBack     button
 }
 
 func createCentersAndRoadsPage() (lay uiCentersAndRoadsPage) {
@@ -44,6 +45,8 @@ func createCentersAndRoadsPage() (lay uiCentersAndRoadsPage) {
 
 	lay.btnGenerate.label = "Generate roads"
 	lay.btnAccept.label = "Accept roads"
+
+	lay.btnBack.label = "Back"
 
 	return lay
 }
@@ -79,6 +82,10 @@ func (l *uiCentersAndRoadsPage) Layout(gtx GC, theme *material.Theme) {
 
 				makeButton(gtx, theme, &l.btnGenerate.button, l.btnGenerate.label),
 				makeButton(gtx, theme, &l.btnAccept.button, l.btnAccept.label),
+
+				layout.Rigid(layout.Spacer{Height: unit.Dp(100)}.Layout),
+
+				makeButton(gtx, theme, &l.btnBack.button, l.btnBack.label),
 			)
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(mapWidth)}.Layout),
@@ -91,6 +98,9 @@ func (l *uiCentersAndRoadsPage) ProcessButtons(gtx GC, ui *uiPages, data *mapDat
 	}
 	if l.btnAccept.button.Clicked(gtx) {
 		ui.currentPage = l.processAcceptButton(gtx, data)
+	}
+	if l.btnBack.button.Clicked(gtx) {
+		ui.currentPage = l.processBackButton(gtx, data)
 	}
 }
 
@@ -135,7 +145,12 @@ func (l *uiCentersAndRoadsPage) processAcceptButton(gtx GC, data *mapData) uiPag
 		return genCentersAndRoadsPage
 	}
 
-	return genBlocksPage
+	return genBigAreasPage
+}
+
+func (l *uiCentersAndRoadsPage) processBackButton(gtx GC, data *mapData) uiPage {
+	data.cityMap.Roads = data.cityMap.Roads[:0]
+	return genBordersPage
 }
 
 func generateRoads(cityMap generator.Map, chanMap chan generator.Map, initials generator.InitialValuesRoads, invalidator func()) {

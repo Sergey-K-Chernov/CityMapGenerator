@@ -21,6 +21,13 @@ type InitialValuesRoads struct {
 	Branching  int
 }
 
+type InitialValuesAreas struct {
+	NumIndustrial  int
+	AreaIndustrial float64
+	NumParks       int
+	AreaParks      float64
+}
+
 type InitialValuesBlocks struct {
 	Size Range
 }
@@ -29,11 +36,24 @@ type Map struct {
 	BorderPoints []genmath.Point
 	Center       genmath.Point
 	Roads        []Road
+	Areas        []Area
 	Blocks       []Block
 }
 
 type Road struct {
 	Points []genmath.Point
+}
+
+type AreaType int
+
+const (
+	AreaIndustrial AreaType = iota
+	AreaPark
+)
+
+type Area struct {
+	Points []genmath.Point
+	Type   AreaType
 }
 
 type Block struct {

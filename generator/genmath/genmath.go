@@ -22,6 +22,10 @@ func RandFloat(min, max float64) float64 {
 	return min + (max-min)*rand.Float64()
 }
 
+func RandInt(min, max int) int {
+	return int(float64(min) + float64(max-min)*rand.Float64() + 0.5)
+}
+
 type Point struct {
 	X float64
 	Y float64

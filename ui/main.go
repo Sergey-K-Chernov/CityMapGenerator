@@ -44,6 +44,7 @@ func run(window *app.Window) error {
 
 	var ops op.Ops
 	ui := makeUi()
+	settings := DrawSettings{greenfill: true, borders: true}
 
 	for {
 		switch e := window.Event().(type) {
@@ -59,7 +60,17 @@ func run(window *app.Window) error {
 
 			ui.pages[ui.currentPage].Layout(gtx, theme)
 
-			tryDrawMap(&ops, gtx, &data)
+			if ui.currentPage <= genBigAreasPage {
+				settings.greenfill = false
+				settings.borders = true
+				settings.center = true
+			} else {
+				settings.greenfill = true
+				settings.borders = false
+				settings.center = false
+			}
+
+			tryDrawMap(&ops, gtx, &data, settings)
 
 			// Pass the drawing operations to the GPU.
 			e.Frame(gtx.Ops)
