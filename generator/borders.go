@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"math"
 
+	"chirrwick.com/projects/city/city_map"
 	gm "chirrwick.com/projects/city/generator/genmath"
 )
 
-func GenerateBorders(chanMap chan Map, initials InitialValuesMap) {
+func GenerateBorders(chanMap chan city_map.Map, initials InitialValuesMap) {
 	nPoints := initials.NumSides
 	rMin := initials.Raduis.Min
 	rMax := initials.Raduis.Max
@@ -15,7 +16,7 @@ func GenerateBorders(chanMap chan Map, initials InitialValuesMap) {
 	angle_step := gm.DegToRad(360. / float64(nPoints))
 	angle_variation := angle_step / 2
 
-	var cityMap Map
+	var cityMap city_map.Map
 	cityMap.BorderPoints = make([]gm.Point, initials.NumSides)
 
 	for i := 0; i < nPoints; i++ {

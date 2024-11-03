@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"chirrwick.com/projects/city/city_map"
 	"chirrwick.com/projects/city/generator"
 	"gioui.org/layout"
 	"gioui.org/text"
@@ -136,7 +137,7 @@ func (l *uiBordersPage) processAcceptButton(data *mapData) uiPage {
 	return genCentersAndRoadsPage
 }
 
-func generateBorders(chanMap chan generator.Map, initials generator.InitialValuesMap, invalidator func()) {
+func generateBorders(chanMap chan city_map.Map, initials generator.InitialValuesMap, invalidator func()) {
 	generator.GenerateBorders(chanMap, initials)
 	invalidator()
 }

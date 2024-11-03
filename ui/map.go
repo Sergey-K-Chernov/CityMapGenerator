@@ -6,7 +6,7 @@ import (
 	"image/color"
 	"math"
 
-	"chirrwick.com/projects/city/generator"
+	"chirrwick.com/projects/city/city_map"
 	"chirrwick.com/projects/city/generator/genmath"
 	"gioui.org/f32"
 	"gioui.org/op"
@@ -108,10 +108,10 @@ func drawAreas(ops *op.Ops, data *mapData, scale float64) {
 		grey := color.NRGBA{R: 0xDD, G: 0xDD, B: 0xDD, A: 0xFF}
 		light_green := color.NRGBA{R: 0xDD, G: 0xFF, B: 0xDD, A: 0xFF}
 
-		if area.Type == generator.AreaIndustrial {
+		if area.Type == city_map.AreaIndustrial {
 			paint.FillShape(ops, grey, clip.Outline{Path: path.End()}.Op())
 		}
-		if area.Type == generator.AreaPark {
+		if area.Type == city_map.AreaPark {
 			paint.FillShape(ops, light_green, clip.Outline{Path: path.End()}.Op())
 		}
 		/*

@@ -4,6 +4,7 @@ import (
 	"math"
 	"sync"
 
+	"chirrwick.com/projects/city/city_map"
 	gm "chirrwick.com/projects/city/generator/genmath"
 )
 
@@ -21,10 +22,10 @@ import (
 
 */
 
-func GenerateBlocks(city_map Map, chan_map chan Map, initials InitialValuesBlocks) (blocks []Block) {
-	city_area := calcPolygonArea(city_map.BorderPoints, city_map.Center)
+func GenerateBlocks(cityMap city_map.Map, chan_map chan city_map.Map, initials InitialValuesBlocks) (blocks []city_map.Block) {
+	city_area := calcPolygonArea(cityMap.BorderPoints, cityMap.Center)
 
-	for _, a := range city_map.Areas {
+	for _, a := range cityMap.Areas {
 		city_area -= a.Area
 	}
 
@@ -33,14 +34,14 @@ func GenerateBlocks(city_map Map, chan_map chan Map, initials InitialValuesBlock
 	blocks_area := 0.0
 
 	// genetare initial set of blocks, random
-	block_centers := generateRandomPointsInsideCity(n_blocks, city_map)
-	blocks, blocks_area = generateBlocksInPoints(block_centers, city_map, initials, blocks)
+	block_centers := generateRandomPointsInsideCity(n_blocks, cityMap)
+	blocks, blocks_area = generateBlocksInPoints(block_centers, cityMap, initials, blocks)
 
 	// fill gaps with less randomly generated blocks
 	for i_step := 1; blocks_area < city_area*0.98; i_step++ {
-		block_centers = generateConcentricPointsInsideCity(city_map, initials, i_step, blocks)
+		block_centers = generateConcentricPointsInsideCity(cityMap, initials, i_step, blocks)
 		var area float64
-		blocks, area = generateBlocksInPoints(block_centers, city_map, initials, blocks)
+		blocks, area = generateBlocksInPoints(block_centers, cityMap, initials, blocks)
 		blocks_area += area
 	}
 
@@ -54,8 +55,8 @@ func GenerateBlocks(city_map Map, chan_map chan Map, initials InitialValuesBlock
 	return blocks
 }
 
-func generateRandomPointsInsideCity(qty int, city_map Map) []gm.Point {
-	rect := getMapRect(city_map)
+func generateRandomPointsInsideCity(qty int, cityMap city_map.Map) []gm.Point {
+	rect := getMapRect(cityMap)
 
 	var wg sync.WaitGroup
 	wg.Add(qty)
@@ -67,7 +68,7 @@ func generateRandomPointsInsideCity(qty int, city_map Map) []gm.Point {
 			x := gm.RandFloat(rect.Left, rect.Right)
 			y := gm.RandFloat(rect.Bottom, rect.Top)
 			p := gm.Point{X: x, Y: y}
-			for !checkPointInsideBorders(p, city_map) || checkPointInsideAreas(p, city_map) {
+			for !checkPointInsideBorders(p, cityMap) || checkPointInsideAreas(p, cityMap) {
 				x = gm.RandFloat(rect.Left, rect.Right)
 				y = gm.RandFloat(rect.Bottom, rect.Top)
 				p = gm.Point{X: x, Y: y}
@@ -80,10 +81,10 @@ func generateRandomPointsInsideCity(qty int, city_map Map) []gm.Point {
 	return points
 }
 
-func generateConcentricPointsInsideCity(city_map Map, initials InitialValuesBlocks, i_step int, blocks []Block) (points []gm.Point) {
+func generateConcentricPointsInsideCity(cityMap city_map.Map, initials InitialValuesBlocks, i_step int, blocks []city_map.Block) (points []gm.Point) {
 	max_radius := 0.0
-	for _, p := range city_map.BorderPoints {
-		max_radius = max(max_radius, p.Sub(city_map.Center).Length())
+	for _, p := range cityMap.BorderPoints {
+		max_radius = max(max_radius, p.Sub(cityMap.Center).Length())
 	}
 
 	step := (initials.Size.Min + initials.Size.Max) / float64(i_step)
@@ -101,14 +102,14 @@ func generateConcentricPointsInsideCity(city_map Map, initials InitialValuesBloc
 
 				point := gm.Point{X: radius, Y: 0}
 				point.Rotate(angle)
-				point.AddInPlace(city_map.Center)
+				point.AddInPlace(cityMap.Center)
 				point.AddInPlace(generateRadialRandomPoint(0, 2*math.Pi, step/8, step/4))
 
-				if !checkPointInsideBorders(point, city_map) {
+				if !checkPointInsideBorders(point, cityMap) {
 					return
 				}
 
-				for _, area := range city_map.Areas {
+				for _, area := range cityMap.Areas {
 					if checkPointInsidePolygon(point, area.Points) {
 						return
 					}
@@ -133,12 +134,12 @@ func generateConcentricPointsInsideCity(city_map Map, initials InitialValuesBloc
 	return
 }
 
-func generateBlocksInPoints(block_centers []gm.Point, city_map Map, initials InitialValuesBlocks, blocks []Block) ([]Block, float64) {
+func generateBlocksInPoints(block_centers []gm.Point, cityMap city_map.Map, initials InitialValuesBlocks, blocks []city_map.Block) ([]city_map.Block, float64) {
 	area := 0.0
 
 	for i := 0; i < len(block_centers); i++ {
 		bc := block_centers[i]
-		b := generateBlock(bc, city_map, initials, blocks)
+		b := generateBlock(bc, cityMap, initials, blocks)
 		blocks = append(blocks, b)
 		block_centers = removePointsInsideFigure(block_centers, b.Points)
 		area += calcPolygonArea(b.Points, b.Center)
@@ -147,7 +148,7 @@ func generateBlocksInPoints(block_centers []gm.Point, city_map Map, initials Ini
 	return blocks, area
 }
 
-func generateBlock(center gm.Point, city_map Map, initials InitialValuesBlocks, blocks []Block) (b Block) {
+func generateBlock(center gm.Point, cityMap city_map.Map, initials InitialValuesBlocks, blocks []city_map.Block) (b city_map.Block) {
 	side_1 := gm.RandFloat(initials.Size.Min, initials.Size.Max)
 	side_2 := gm.RandFloat(initials.Size.Min, initials.Size.Max)
 	angle := gm.RandFloat(0, 2*math.Pi)
@@ -165,19 +166,19 @@ func generateBlock(center gm.Point, city_map Map, initials InitialValuesBlocks, 
 	}
 	b.Angle = angle
 
-	b.Points = cropFigureByRoads(b.Center, b.Points, city_map)
+	b.Points = cropFigureByRoads(b.Center, b.Points, cityMap)
 	b.Points = cropFigureByBlocks(b.Center, b.Points, blocks)
 
 	return
 }
 
-func cropFigureByRoads(center gm.Point, figure []gm.Point, city_map Map) []gm.Point {
+func cropFigureByRoads(center gm.Point, figure []gm.Point, cityMap city_map.Map) []gm.Point {
 	max_radius := 0.0
 	for _, p := range figure {
 		max_radius = max(max_radius, p.Sub(center).Length())
 	}
 
-	for _, road := range city_map.Roads {
+	for _, road := range cityMap.Roads {
 		for i := range len(road.Points) - 1 {
 			figure = cutFigure(center, figure, max_radius, gm.LineSegment{Begin: road.Points[i], End: road.Points[i+1]})
 		}
@@ -185,14 +186,14 @@ func cropFigureByRoads(center gm.Point, figure []gm.Point, city_map Map) []gm.Po
 	return figure
 }
 
-func cropFigureByBlocks(center gm.Point, figure []gm.Point, blocks []Block) []gm.Point {
+func cropFigureByBlocks(center gm.Point, figure []gm.Point, blocks []city_map.Block) []gm.Point {
 	for _, b := range blocks {
 		figure = cropFigureByBlock(center, figure, b)
 	}
 	return figure
 }
 
-func cropFigureByBlock(center gm.Point, figure []gm.Point, block Block) []gm.Point {
+func cropFigureByBlock(center gm.Point, figure []gm.Point, block city_map.Block) []gm.Point {
 	max_radius := 0.0
 	for _, p := range figure {
 		max_radius = max(max_radius, p.Sub(center).Length())
@@ -222,8 +223,8 @@ func estimateNumberOfBlocks(area float64, initials InitialValuesBlocks) int {
 	return int(area / est_block_area)
 }
 
-func checkPointInsideAreas(point gm.Point, city_map Map) bool {
-	for _, area := range city_map.Areas {
+func checkPointInsideAreas(point gm.Point, cityMap city_map.Map) bool {
+	for _, area := range cityMap.Areas {
 		if checkPointInsidePolygon(point, area.Points) {
 			return true
 		}
@@ -231,11 +232,11 @@ func checkPointInsideAreas(point gm.Point, city_map Map) bool {
 	return false
 }
 
-func getMapRect(city_map Map) (rect gm.Rect) {
+func getMapRect(cityMap city_map.Map) (rect gm.Rect) {
 	rect.Left = 1e10
 	rect.Bottom = 1e10
 
-	for _, p := range city_map.BorderPoints {
+	for _, p := range cityMap.BorderPoints {
 		rect.Left = math.Min(rect.Left, p.X)
 		rect.Right = math.Max(rect.Right, p.X)
 
@@ -246,11 +247,11 @@ func getMapRect(city_map Map) (rect gm.Rect) {
 	return
 }
 
-func checkPointInsideBorders(p gm.Point, city_map Map) bool {
-	return checkPointInsidePolygon(p, city_map.BorderPoints)
+func checkPointInsideBorders(p gm.Point, cityMap city_map.Map) bool {
+	return checkPointInsidePolygon(p, cityMap.BorderPoints)
 }
 
-func generateStreets(block Block, min_dist, max_dist float64) Block {
+func generateStreets(block city_map.Block, min_dist, max_dist float64) city_map.Block {
 	max_length := 0.0
 	for _, p := range block.Points {
 		max_length = max(max_length, p.Sub(block.Center).Length())
@@ -302,7 +303,7 @@ func generateStreets(block Block, min_dist, max_dist float64) Block {
 	return block
 }
 
-func tryMakeStreet(p1, p2, shift_point gm.Point, block Block) (gm.LineSegment, bool) {
+func tryMakeStreet(p1, p2, shift_point gm.Point, block city_map.Block) (gm.LineSegment, bool) {
 	street := gm.LineSegment{Begin: p1.Add(shift_point), End: p2.Add(shift_point)}
 
 	points := make([]gm.Point, 0)

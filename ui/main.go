@@ -8,12 +8,12 @@ import (
 	"gioui.org/op"
 	"gioui.org/widget/material"
 
-	"chirrwick.com/projects/city/generator"
+	"chirrwick.com/projects/city/city_map"
 )
 
 type mapData struct {
-	cityMap     generator.Map
-	channel     chan generator.Map
+	cityMap     city_map.Map
+	channel     chan city_map.Map
 	invalidator func()
 }
 
@@ -37,7 +37,7 @@ func run(window *app.Window) error {
 	theme := material.NewTheme()
 
 	var data mapData
-	data.channel = make(chan generator.Map)
+	data.channel = make(chan city_map.Map)
 	data.invalidator = func() {
 		window.Invalidate()
 	}

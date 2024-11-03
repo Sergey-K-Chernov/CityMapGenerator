@@ -3,23 +3,24 @@ package generator
 import (
 	"math"
 
+	"chirrwick.com/projects/city/city_map"
 	gm "chirrwick.com/projects/city/generator/genmath"
 )
 
-func GenerateAreas(cityMap Map, chanMap chan Map, initials InitialValuesAreas) (areas []Area) {
+func GenerateAreas(cityMap city_map.Map, chanMap chan city_map.Map, initials InitialValuesAreas) (areas []city_map.Area) {
 	total_area := calcPolygonArea(cityMap.BorderPoints, cityMap.Center)
 	areas = append(areas, generateIndustrialAreas(cityMap, initials, total_area)...)
 	areas = append(areas, generateParksAreas(cityMap, initials, total_area)...)
 	return
 }
 
-func generateIndustrialAreas(cityMap Map, initials InitialValuesAreas, total_area float64) (areas []Area) {
+func generateIndustrialAreas(cityMap city_map.Map, initials InitialValuesAreas, total_area float64) (areas []city_map.Area) {
 	target_areas := calcTargetAreas(total_area*initials.AreaIndustrial/100, initials.NumIndustrial)
 
 	for i := 0; i < len(target_areas); i++ {
 		area := generateArea(target_areas[i])
 		shiftIndustrialArea(&area, cityMap)
-		area.Type = AreaIndustrial
+		area.Type = city_map.AreaIndustrial
 
 		areas = append(areas, area)
 	}
@@ -27,13 +28,13 @@ func generateIndustrialAreas(cityMap Map, initials InitialValuesAreas, total_are
 	return
 }
 
-func generateParksAreas(cityMap Map, initials InitialValuesAreas, total_area float64) (areas []Area) {
+func generateParksAreas(cityMap city_map.Map, initials InitialValuesAreas, total_area float64) (areas []city_map.Area) {
 	target_areas := calcTargetAreas(total_area*initials.AreaParks/100, initials.NumParks)
 
 	for i := 0; i < len(target_areas); i++ {
 		area := generateArea(target_areas[i])
 		shiftParkArea(&area, cityMap)
-		area.Type = AreaPark
+		area.Type = city_map.AreaPark
 
 		areas = append(areas, area)
 	}
@@ -41,7 +42,7 @@ func generateParksAreas(cityMap Map, initials InitialValuesAreas, total_area flo
 	return
 }
 
-func shiftParkArea(area *Area, cityMap Map) {
+func shiftParkArea(area *city_map.Area, cityMap city_map.Map) {
 	for i := range area.Points {
 		area.Points[i].AddInPlace(cityMap.Center)
 	}
@@ -71,7 +72,7 @@ func shiftParkArea(area *Area, cityMap Map) {
 
 }
 
-func shiftIndustrialArea(area *Area, cityMap Map) {
+func shiftIndustrialArea(area *city_map.Area, cityMap city_map.Map) {
 	for i := range area.Points {
 		area.Points[i].AddInPlace(cityMap.Center)
 	}
@@ -116,8 +117,8 @@ func calcTargetAreas(total_area float64, number_of_areas int) []float64 {
 	return target_areas
 }
 
-func generateArea(target_area float64) Area {
-	var area Area
+func generateArea(target_area float64) city_map.Area {
+	var area city_map.Area
 	n_points := gm.RandInt(4, 6)
 	for i := 0; i < n_points; i++ {
 		angle := float64(i) * (2 * math.Pi / float64(n_points))

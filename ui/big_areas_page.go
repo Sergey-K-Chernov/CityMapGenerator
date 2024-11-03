@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"chirrwick.com/projects/city/city_map"
 	"chirrwick.com/projects/city/generator"
 	"gioui.org/layout"
 	"gioui.org/text"
@@ -152,7 +153,7 @@ func (l *uiBigAreasPage) processBackButton(data *mapData) uiPage {
 	return genCentersAndRoadsPage
 }
 
-func generateAreas(cityMap generator.Map, chanMap chan generator.Map, initials generator.InitialValuesAreas, invalidator func()) {
+func generateAreas(cityMap city_map.Map, chanMap chan city_map.Map, initials generator.InitialValuesAreas, invalidator func()) {
 	areas := generator.GenerateAreas(cityMap, chanMap, initials)
 	cityMap.Areas = areas
 	chanMap <- cityMap

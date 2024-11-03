@@ -8,9 +8,84 @@ import (
 	gm "chirrwick.com/projects/city/generator/genmath"
 )
 
+type Range struct {
+	Min float64
+	Max float64
+}
+
+type InitialValuesMap struct {
+	Raduis      Range
+	NumSides    int
+	VertexShift float64
+}
+
+type InitialValuesRoads struct {
+	NumCenters int
+	Raduis     Range
+	Branching  int
+}
+
+type InitialValuesAreas struct {
+	NumIndustrial  int
+	AreaIndustrial float64
+	NumParks       int
+	AreaParks      float64
+}
+
+type InitialValuesBlocks struct {
+	Size Range
+}
+
 type Intersection struct {
 	i, i_next int
 	point     gm.Point
+}
+
+type Fan struct {
+	root  gm.Point
+	outer []Fan
+}
+
+func makeFan(root gm.Point) (f Fan) {
+	f.root = root
+	f.outer = make([]Fan, 0)
+	return
+}
+
+func (f *Fan) split() {
+	n := len(f.outer)
+	if n < 2 {
+		return
+	}
+
+	new_outer := make([]Fan, 0)
+	for i := 0; i < n-1; i += 2 {
+		p1 := f.outer[i]
+		p2 := f.outer[i+1]
+
+		min_radial_ratio, max_radial_ratio := 0.3, 0.7
+		min_dist_ratio, max_dist_ratio := 1.0/math.Log2(float64(n))*0.6, 1.0/math.Log2(float64(n))*0.9
+
+		radial_ratio := gm.RandFloat(min_radial_ratio, max_radial_ratio)
+		dist_ratio := 1 - gm.RandFloat(min_dist_ratio, max_dist_ratio)
+
+		segment := gm.LineSegment{Begin: p1.root, End: p2.root}
+		segment, _ = segment.Split(radial_ratio)
+
+		segment = gm.LineSegment{Begin: f.root, End: segment.End}
+		segment, _ = segment.Split(dist_ratio)
+
+		fan := makeFan(segment.End)
+		fan.outer = append(fan.outer, p1, p2)
+		new_outer = append(new_outer, fan)
+	}
+	if len(f.outer)%2 != 0 {
+		new_outer = append(new_outer, f.outer[len(f.outer)-1])
+	}
+
+	f.outer = new_outer
+
+	f.split()
 }
 
 func generateRadialRandomPoint(angle_min, angle_max, radius_min, raduis_max float64) gm.Point {
