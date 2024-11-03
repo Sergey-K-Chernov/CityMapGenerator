@@ -4,34 +4,6 @@ import (
 	"chirrwick.com/projects/city/generator/genmath"
 )
 
-type Range struct {
-	Min float64
-	Max float64
-}
-
-type InitialValuesMap struct {
-	Raduis      Range
-	NumSides    int
-	VertexShift float64
-}
-
-type InitialValuesRoads struct {
-	NumCenters int
-	Raduis     Range
-	Branching  int
-}
-
-type InitialValuesAreas struct {
-	NumIndustrial  int
-	AreaIndustrial float64
-	NumParks       int
-	AreaParks      float64
-}
-
-type InitialValuesBlocks struct {
-	Size Range
-}
-
 type Map struct {
 	BorderPoints []genmath.Point
 	Center       genmath.Point
@@ -62,4 +34,32 @@ type Block struct {
 	Points  []genmath.Point
 	Angle   float64
 	Streets []genmath.LineSegment
+}
+
+type Range struct {
+	Min float64
+	Max float64
+}
+
+type InitialValuesMap struct {
+	Raduis      Range
+	NumSides    int
+	VertexShift float64
+}
+
+type InitialValuesRoads struct {
+	NumCenters int
+	Raduis     Range
+	Branching  int
+}
+
+type InitialValuesAreas struct {
+	NumIndustrial  int
+	AreaIndustrial float64
+	NumParks       int
+	AreaParks      float64
+}
+
+type InitialValuesBlocks struct {
+	Size Range
 }

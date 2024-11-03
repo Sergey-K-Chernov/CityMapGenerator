@@ -7,7 +7,7 @@ import (
 )
 
 func GenerateAreas(cityMap Map, chanMap chan Map, initials InitialValuesAreas) (areas []Area) {
-	total_area := calcArea(cityMap.BorderPoints, cityMap.Center)
+	total_area := calcPolygonArea(cityMap.BorderPoints, cityMap.Center)
 	areas = append(areas, generateIndustrialAreas(cityMap, initials, total_area)...)
 	areas = append(areas, generateParksAreas(cityMap, initials, total_area)...)
 	return
@@ -56,7 +56,7 @@ func shiftParkArea(area *Area, cityMap Map) {
 	end_point.Rotate(angle)
 	s := gm.LineSegment{Begin: cityMap.Center, End: cityMap.Center.Add(end_point)}
 
-	if p_border, _, err := intersectWithFigure(s, cityMap.BorderPoints); err == nil {
+	if p_border, _, err := intersectSegmentWithFigure(s, cityMap.BorderPoints); err == nil {
 		distance_border := p_border.Sub(cityMap.Center).Length()
 
 		shift := gm.RandFloat(distance_border*0.2, distance_border)
@@ -86,10 +86,10 @@ func shiftIndustrialArea(area *Area, cityMap Map) {
 	end_point.Rotate(angle)
 	s := gm.LineSegment{Begin: cityMap.Center, End: cityMap.Center.Add(end_point)}
 
-	if p_border, _, err := intersectWithFigure(s, cityMap.BorderPoints); err == nil {
+	if p_border, _, err := intersectSegmentWithFigure(s, cityMap.BorderPoints); err == nil {
 		distance_border := p_border.Sub(cityMap.Center).Length()
 
-		if p_area, _, err := intersectWithFigure(s, area.Points); err == nil {
+		if p_area, _, err := intersectSegmentWithFigure(s, area.Points); err == nil {
 			distance_area := p_area.Sub(cityMap.Center).Length()
 			shift := distance_border - distance_area
 			shift_point := gm.Point{X: shift, Y: 0}
@@ -128,13 +128,13 @@ func generateArea(target_area float64) Area {
 		area.Points = append(area.Points, generateRadialRandomPoint(angle-angle_delta, angle+angle_delta, 8, 12))
 	}
 
-	current_area_area := calcArea(area.Points, gm.Point{X: 0, Y: 0})
+	current_area_area := calcPolygonArea(area.Points, gm.Point{X: 0, Y: 0})
 	scale := math.Sqrt(target_area / current_area_area)
 
 	for i := range area.Points {
 		area.Points[i].Scale(scale)
 	}
 
-	area.Area = calcArea(area.Points, gm.Point{X: 0, Y: 0})
+	area.Area = calcPolygonArea(area.Points, gm.Point{X: 0, Y: 0})
 	return area
 }

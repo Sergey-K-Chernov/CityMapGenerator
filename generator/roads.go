@@ -119,7 +119,7 @@ func generateExits(cityMap Map, initials InitialValuesRoads) []gm.Point {
 	for _, exit := range intermediate_exit_vectors {
 		sg := gm.LineSegment{Begin: cityMap.Center, End: exit}
 		extend(&sg, cityMap.BorderPoints)
-		if ex, _, err := intersectWithFigure(sg, cityMap.BorderPoints); err == nil {
+		if ex, _, err := intersectSegmentWithFigure(sg, cityMap.BorderPoints); err == nil {
 			exit_points = append(exit_points, ex)
 		} else {
 			println(ex.X, ex.Y)
