@@ -29,7 +29,7 @@ func createBlocksPage() (lay uiBlocksPage) {
 
 	lay.maxSize.field.SingleLine = true
 	lay.maxSize.field.Alignment = text.End
-	lay.maxSize.label = "Min Size"
+	lay.maxSize.label = "Max Size"
 	lay.maxSize.defaultValue = "500"
 
 	lay.btnGenerate.label = "Generate blocks"
