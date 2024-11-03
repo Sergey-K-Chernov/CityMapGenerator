@@ -8,6 +8,11 @@ import (
 	gm "chirrwick.com/projects/city/generator/genmath"
 )
 
+type Intersection struct {
+	i, i_next int
+	point     gm.Point
+}
+
 func generateRadialRandomPoint(angle_min, angle_max, radius_min, raduis_max float64) gm.Point {
 	angle := gm.RandFloat(angle_min, angle_max)
 	radius := gm.RandFloat(radius_min, raduis_max)
@@ -31,7 +36,7 @@ func shiftPoints(points []gm.Point) (shift gm.Point) {
 	return
 }
 
-func extend(segment *gm.LineSegment, figure []gm.Vector2D) {
+func extendSegment(segment *gm.LineSegment, figure []gm.Vector2D) {
 	maxLengthSq := 0.0
 	for _, s := range figure {
 		vecToBorder := segment.Begin.Sub(s)
@@ -96,6 +101,41 @@ func intersectSegmentWithFigure(segment gm.LineSegment, figure []gm.Point) (gm.P
 	return gm.Point{}, gm.LineSegment{}, errors.New("no intersection with figure")
 }
 
+func intersectExtendedSegmentWithFigure(figure []gm.Point, segment gm.LineSegment) (intersections []Intersection, ok bool) {
+	intersections = intersectLineWithFigure(figure, segment)
+
+	if len(intersections) < 2 {
+		ok = false
+		return
+	}
+
+	if !checkAnyPointBelongToSegment(segment, intersections) {
+		ok = false
+		return
+	}
+
+	ok = true
+	return
+}
+
+func intersectLineWithFigure(figure []gm.Point, segment gm.LineSegment) (intersections []Intersection) {
+
+	for i, p := range figure {
+		i_next := i + 1
+		if i_next == len(figure) {
+			i_next = 0
+		}
+
+		s := gm.LineSegment{Begin: p, End: figure[i_next]}
+		point, ok := s.IntersectLine(segment)
+		if ok {
+			intersections = append(intersections, Intersection{i: i, i_next: i_next, point: point})
+		}
+	}
+
+	return
+}
+
 func removePointsInsideFigure(points, figure []gm.Point) []gm.Point {
 	for i := 0; i < len(points); {
 		if checkPointInsidePolygon(points[i], figure) {
@@ -157,11 +197,6 @@ func checkXRayIntersectsSegment(p, a, b gm.Point) int {
 	return 1
 }
 
-type Intersection struct {
-	i, i_next int
-	point     gm.Point
-}
-
 func cutFigure(center gm.Point, figure []gm.Point, max_radius float64, segment gm.LineSegment) []gm.Point {
 	// Находим перпендикуляр из центра на отрезок
 	np := segment.GetNormalPoint(center)
@@ -193,7 +228,7 @@ func cutFigure(center gm.Point, figure []gm.Point, max_radius float64, segment g
 		figure = slices.Insert(figure, isec.i_next, isec.point)
 	}
 
-	// Находим проекции каждой точки на перпендикуляр. Если отрицательные, игнорим
+	// Находим проекции каждой точки на перпендикуляр. Если отрицательные, выкидываем
 
 	ortho := gm.Line{Origin: center, Vector: n.GetNormalized()}
 	nlen := n.Length()
@@ -209,41 +244,6 @@ func cutFigure(center gm.Point, figure []gm.Point, max_radius float64, segment g
 	}
 
 	return figure
-}
-
-func intersectExtendedSegmentWithFigure(figure []gm.Point, segment gm.LineSegment) (intersections []Intersection, ok bool) {
-	intersections = intersectLineWithFigure(figure, segment)
-
-	if len(intersections) < 2 {
-		ok = false
-		return
-	}
-
-	if !checkAnyPointBelongToSegment(segment, intersections) {
-		ok = false
-		return
-	}
-
-	ok = true
-	return
-}
-
-func intersectLineWithFigure(figure []gm.Point, segment gm.LineSegment) (intersections []Intersection) {
-
-	for i, p := range figure {
-		i_next := i + 1
-		if i_next == len(figure) {
-			i_next = 0
-		}
-
-		s := gm.LineSegment{Begin: p, End: figure[i_next]}
-		point, ok := s.IntersectLine(segment)
-		if ok {
-			intersections = append(intersections, Intersection{i: i, i_next: i_next, point: point})
-		}
-	}
-
-	return
 }
 
 func checkAnyPointBelongToSegment(segment gm.LineSegment, intersections []Intersection) bool {
