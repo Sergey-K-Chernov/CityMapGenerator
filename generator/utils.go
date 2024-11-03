@@ -173,39 +173,7 @@ func cutFigure(center gm.Point, figure []gm.Point, max_radius float64, segment g
 		return figure
 	}
 
-	// Находим пересечения отрезка с обеими сторонами
-	intersections := make([]Intersection, 0)
-	for i, p := range figure {
-		i_next := i + 1
-		if i_next == len(figure) {
-			i_next = 0
-		}
-
-		s := gm.LineSegment{Begin: p, End: figure[i_next]}
-		point, ok := s.IntersectLine(segment)
-		if ok {
-			intersections = append(intersections, Intersection{i: i, i_next: i_next, point: point})
-		}
-	}
-
-	if len(intersections) < 2 {
-		return figure
-	}
-
-	// Проверяем, находятся ли точки перечечения внутри отрезка
-	line_vec := segment.End.Sub(segment.Begin)
-	line_vec_ort := line_vec.GetNormalized()
-	ok := false
-	for i := 0; i < len(intersections); i++ {
-		isec_vec := intersections[i].point.Sub(segment.Begin)
-
-		projection := line_vec_ort.Dot(isec_vec)
-		if projection > 0 && projection < line_vec.Length() {
-			ok = true
-			break
-		}
-	}
-
+	intersections, ok := intersectExtendedSegmentWithFigure(figure, segment)
 	if !ok {
 		return figure
 	}
@@ -241,4 +209,55 @@ func cutFigure(center gm.Point, figure []gm.Point, max_radius float64, segment g
 	}
 
 	return figure
+}
+
+func intersectExtendedSegmentWithFigure(figure []gm.Point, segment gm.LineSegment) (intersections []Intersection, ok bool) {
+	intersections = intersectLineWithFigure(figure, segment)
+
+	if len(intersections) < 2 {
+		ok = false
+		return
+	}
+
+	if !checkAnyPointBelongToSegment(segment, intersections) {
+		ok = false
+		return
+	}
+
+	ok = true
+	return
+}
+
+func intersectLineWithFigure(figure []gm.Point, segment gm.LineSegment) (intersections []Intersection) {
+
+	for i, p := range figure {
+		i_next := i + 1
+		if i_next == len(figure) {
+			i_next = 0
+		}
+
+		s := gm.LineSegment{Begin: p, End: figure[i_next]}
+		point, ok := s.IntersectLine(segment)
+		if ok {
+			intersections = append(intersections, Intersection{i: i, i_next: i_next, point: point})
+		}
+	}
+
+	return
+}
+
+func checkAnyPointBelongToSegment(segment gm.LineSegment, intersections []Intersection) bool {
+	line_vec := segment.End.Sub(segment.Begin)
+	line_vec_ort := line_vec.GetNormalized()
+	ok := false
+	for i := 0; i < len(intersections); i++ {
+		isec_vec := intersections[i].point.Sub(segment.Begin)
+
+		projection := line_vec_ort.Dot(isec_vec)
+		if projection > 0 && projection < line_vec.Length() {
+			ok = true
+			break
+		}
+	}
+	return ok
 }
