@@ -34,13 +34,13 @@ func GenerateBlocks(city_map Map, chan_map chan Map, initials InitialValuesBlock
 
 	// genetare initial set of blocks, random
 	block_centers := generateRandomPointsInsideCity(n_blocks, city_map)
-	blocks, blocks_area = GenerateBlocksInPoints(block_centers, city_map, initials, blocks)
+	blocks, blocks_area = generateBlocksInPoints(block_centers, city_map, initials, blocks)
 
 	// fill gaps with less randomly generated blocks
 	for i_step := 1; blocks_area < city_area*0.98; i_step++ {
 		block_centers = generateConcentricPointsInsideCity(city_map, initials, i_step, blocks)
 		var area float64
-		blocks, area = GenerateBlocksInPoints(block_centers, city_map, initials, blocks)
+		blocks, area = generateBlocksInPoints(block_centers, city_map, initials, blocks)
 		blocks_area += area
 	}
 
@@ -54,14 +54,90 @@ func GenerateBlocks(city_map Map, chan_map chan Map, initials InitialValuesBlock
 	return blocks
 }
 
-func GenerateBlocksInPoints(block_centers []gm.Point, city_map Map, initials InitialValuesBlocks, blocks []Block) ([]Block, float64) {
+func generateRandomPointsInsideCity(qty int, city_map Map) []gm.Point {
+	rect := getMapRect(city_map)
+
+	var wg sync.WaitGroup
+	wg.Add(qty)
+	points := make([]gm.Point, qty)
+
+	for i := 0; i < qty; i++ {
+		go func(i int) {
+			defer wg.Done()
+			x := gm.RandFloat(rect.Left, rect.Right)
+			y := gm.RandFloat(rect.Bottom, rect.Top)
+			p := gm.Point{X: x, Y: y}
+			for !checkPointInsideBorders(p, city_map) || checkPointInsideAreas(p, city_map) {
+				x = gm.RandFloat(rect.Left, rect.Right)
+				y = gm.RandFloat(rect.Bottom, rect.Top)
+				p = gm.Point{X: x, Y: y}
+			}
+			points[i] = p
+		}(i)
+	}
+
+	wg.Wait()
+	return points
+}
+
+func generateConcentricPointsInsideCity(city_map Map, initials InitialValuesBlocks, i_step int, blocks []Block) (points []gm.Point) {
+	max_radius := 0.0
+	for _, p := range city_map.BorderPoints {
+		max_radius = max(max_radius, p.Sub(city_map.Center).Length())
+	}
+
+	step := (initials.Size.Min + initials.Size.Max) / float64(i_step)
+
+	var wg sync.WaitGroup
+	var mutex sync.Mutex
+
+	for radius := 0.0; radius < max_radius; radius += step {
+		angle_step := 2 * math.Atan2(step, radius)
+
+		for angle := 0.0; angle < 2*math.Pi; angle += angle_step {
+			wg.Add(1)
+			go func(radius, angle float64) {
+				defer wg.Done()
+
+				point := gm.Point{X: radius, Y: 0}
+				point.Rotate(angle)
+				point.AddInPlace(city_map.Center)
+				point.AddInPlace(generateRadialRandomPoint(0, 2*math.Pi, step/8, step/4))
+
+				if !checkPointInsideBorders(point, city_map) {
+					return
+				}
+
+				for _, area := range city_map.Areas {
+					if checkPointInsidePolygon(point, area.Points) {
+						return
+					}
+				}
+
+				for _, block := range blocks {
+					if checkPointInsidePolygon(point, block.Points) {
+						return
+					}
+				}
+
+				mutex.Lock()
+				points = append(points, point)
+				mutex.Unlock()
+
+			}(radius, angle)
+		}
+	}
+
+	wg.Wait()
+
+	return
+}
+
+func generateBlocksInPoints(block_centers []gm.Point, city_map Map, initials InitialValuesBlocks, blocks []Block) ([]Block, float64) {
 	area := 0.0
 
 	for i := 0; i < len(block_centers); i++ {
 		bc := block_centers[i]
-		if i > 0 { // debug limit
-			//break
-		}
 		b := generateBlock(bc, city_map, initials, blocks)
 		blocks = append(blocks, b)
 		block_centers = removePointsInsideFigure(block_centers, b.Points)
@@ -96,15 +172,6 @@ func generateBlock(center gm.Point, city_map Map, initials InitialValuesBlocks, 
 }
 
 func cropFigureByRoads(center gm.Point, figure []gm.Point, city_map Map) []gm.Point {
-	/*
-		println("center")
-		println(center.X, center.Y)
-		println("figure")
-		for _, p := range figure {
-			println(p.X, p.Y)
-		}
-	*/
-
 	max_radius := 0.0
 	for _, p := range figure {
 		max_radius = max(max_radius, p.Sub(center).Length())
@@ -155,33 +222,7 @@ func estimateNumberOfBlocks(area float64, initials InitialValuesBlocks) int {
 	return int(area / est_block_area)
 }
 
-func generateRandomPointsInsideCity(qty int, city_map Map) []gm.Point {
-	rect := get_map_rect(city_map)
-
-	var wg sync.WaitGroup
-	wg.Add(qty)
-	points := make([]gm.Point, qty)
-
-	for i := 0; i < qty; i++ {
-		go func(i int) {
-			defer wg.Done()
-			x := gm.RandFloat(rect.Left, rect.Right)
-			y := gm.RandFloat(rect.Bottom, rect.Top)
-			p := gm.Point{X: x, Y: y}
-			for !check_inside_borders(p, city_map) || checkInsideAreas(p, city_map) {
-				x = gm.RandFloat(rect.Left, rect.Right)
-				y = gm.RandFloat(rect.Bottom, rect.Top)
-				p = gm.Point{X: x, Y: y}
-			}
-			points[i] = p
-		}(i)
-	}
-
-	wg.Wait()
-	return points
-}
-
-func checkInsideAreas(point gm.Point, city_map Map) bool {
+func checkPointInsideAreas(point gm.Point, city_map Map) bool {
 	for _, area := range city_map.Areas {
 		if checkPointInsidePolygon(point, area.Points) {
 			return true
@@ -190,60 +231,7 @@ func checkInsideAreas(point gm.Point, city_map Map) bool {
 	return false
 }
 
-func generateConcentricPointsInsideCity(city_map Map, initials InitialValuesBlocks, i_step int, blocks []Block) (points []gm.Point) {
-	max_radius := 0.0
-	for _, p := range city_map.BorderPoints {
-		max_radius = max(max_radius, p.Sub(city_map.Center).Length())
-	}
-
-	step := (initials.Size.Min + initials.Size.Max) / float64(i_step)
-
-	var wg sync.WaitGroup
-	var mutex sync.Mutex
-
-	for radius := 0.0; radius < max_radius; radius += step {
-		angle_step := 2 * math.Atan2(step, radius)
-
-		for angle := 0.0; angle < 2*math.Pi; angle += angle_step {
-			func(radius, angle float64) {
-				wg.Add(1)
-				defer wg.Done()
-
-				point := gm.Point{X: radius, Y: 0}
-				point.Rotate(angle)
-				point.AddInPlace(city_map.Center)
-				point.AddInPlace(generateRadialRandomPoint(0, 2*math.Pi, step/8, step/4))
-
-				if !check_inside_borders(point, city_map) {
-					return
-				}
-
-				for _, area := range city_map.Areas {
-					if checkPointInsidePolygon(point, area.Points) {
-						return
-					}
-				}
-
-				for _, block := range blocks {
-					if checkPointInsidePolygon(point, block.Points) {
-						return
-					}
-				}
-
-				mutex.Lock()
-				points = append(points, point)
-				mutex.Unlock()
-
-			}(radius, angle)
-		}
-	}
-
-	wg.Wait()
-
-	return
-}
-
-func get_map_rect(city_map Map) (rect gm.Rect) {
+func getMapRect(city_map Map) (rect gm.Rect) {
 	rect.Left = 1e10
 	rect.Bottom = 1e10
 
@@ -258,7 +246,7 @@ func get_map_rect(city_map Map) (rect gm.Rect) {
 	return
 }
 
-func check_inside_borders(p gm.Point, city_map Map) bool {
+func checkPointInsideBorders(p gm.Point, city_map Map) bool {
 	return checkPointInsidePolygon(p, city_map.BorderPoints)
 }
 
