@@ -52,7 +52,6 @@ func run(window *app.Window) error {
 			return e.Err
 
 		case app.FrameEvent:
-			// This graphics context is used for managing the rendering state
 			gtx := app.NewContext(&ops, e)
 
 			btnProcessor := ui.pages[ui.currentPage].(uiButtonProcessor)
@@ -78,7 +77,6 @@ func run(window *app.Window) error {
 
 			tryDrawMap(&ops, gtx, &data, settings)
 
-			// Pass the drawing operations to the GPU.
 			e.Frame(gtx.Ops)
 		}
 	}

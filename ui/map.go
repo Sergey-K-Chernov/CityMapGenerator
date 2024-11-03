@@ -114,12 +114,6 @@ func drawAreas(ops *op.Ops, data *mapData, scale float64) {
 		if area.Type == city_map.AreaPark {
 			paint.FillShape(ops, light_green, clip.Outline{Path: path.End()}.Op())
 		}
-		/*
-			for i, p := range area.Points {
-				clr := uint8(float64(i) / float64(len(area.Points)) * 255)
-				drawDebugVertex(ops, p, clr, scale)
-			}
-		*/
 	}
 
 }
@@ -143,11 +137,6 @@ func drawBlocks(ops *op.Ops, data *mapData, scale float64) {
 			}.Op())
 
 		drawStreets(ops, block.Streets, scale)
-		/*
-			for i, p := range block.Points {
-				clr := uint8(float64(i) / float64(len(block.Points)) * 255)
-				drawDebugVertex(ops, p, clr, scale)
-			}*/
 	}
 }
 
