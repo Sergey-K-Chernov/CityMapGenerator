@@ -73,17 +73,17 @@ func (l *uiBlocksPage) Layout(gtx GC, theme *material.Theme) {
 
 func (l *uiBlocksPage) ProcessButtons(gtx GC, ui *uiPages, data *mapData) {
 	if l.btnGenerate.button.Clicked(gtx) {
-		l.processGenerateButton(gtx, data)
+		l.processGenerateButton(data)
 	}
 	if l.btnAccept.button.Clicked(gtx) {
-		ui.currentPage = l.processAcceptButton(gtx, data)
+		ui.currentPage = l.processAcceptButton(data)
 	}
 	if l.btnBack.button.Clicked(gtx) {
-		ui.currentPage = l.processBackButton(gtx, data)
+		ui.currentPage = l.processBackButton(data)
 	}
 }
 
-func (l *uiBlocksPage) processGenerateButton(gtx GC, data *mapData) {
+func (l *uiBlocksPage) processGenerateButton(data *mapData) {
 	var initials generator.InitialValuesBlocks
 
 	inputString := l.minSize.field.Text()
@@ -103,12 +103,12 @@ func (l *uiBlocksPage) processGenerateButton(gtx GC, data *mapData) {
 	go generateBlocks(data.cityMap, data.channel, initials, data.invalidator)
 }
 
-func (l *uiBlocksPage) processAcceptButton(gtx GC, data *mapData) uiPage {
+func (l *uiBlocksPage) processAcceptButton(data *mapData) uiPage {
 	println("TO DO")
 	return genBlocksPage
 }
 
-func (l *uiBlocksPage) processBackButton(gtx GC, data *mapData) uiPage {
+func (l *uiBlocksPage) processBackButton(data *mapData) uiPage {
 	data.cityMap.Blocks = data.cityMap.Blocks[:0]
 	return genBigAreasPage
 }

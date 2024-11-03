@@ -93,17 +93,17 @@ func (l *uiBigAreasPage) Layout(gtx GC, theme *material.Theme) {
 
 func (l *uiBigAreasPage) ProcessButtons(gtx GC, ui *uiPages, data *mapData) {
 	if l.btnGenerate.button.Clicked(gtx) {
-		l.processGenerateButton(gtx, data)
+		l.processGenerateButton(data)
 	}
 	if l.btnAccept.button.Clicked(gtx) {
-		ui.currentPage = l.processAcceptButton(gtx, data)
+		ui.currentPage = l.processAcceptButton(data)
 	}
 	if l.btnBack.button.Clicked(gtx) {
-		ui.currentPage = l.processBackButton(gtx, data)
+		ui.currentPage = l.processBackButton(data)
 	}
 }
 
-func (l *uiBigAreasPage) processGenerateButton(gtx GC, data *mapData) {
+func (l *uiBigAreasPage) processGenerateButton(data *mapData) {
 	var initials generator.InitialValuesAreas
 
 	inputString := l.nIndustrialAreas.field.Text()
@@ -139,7 +139,7 @@ func (l *uiBigAreasPage) processGenerateButton(gtx GC, data *mapData) {
 	go generateAreas(data.cityMap, data.channel, initials, data.invalidator)
 }
 
-func (l *uiBigAreasPage) processAcceptButton(gtx GC, data *mapData) uiPage {
+func (l *uiBigAreasPage) processAcceptButton(data *mapData) uiPage {
 	if len(data.cityMap.Roads) == 0 {
 		return genBigAreasPage
 	}
@@ -147,7 +147,7 @@ func (l *uiBigAreasPage) processAcceptButton(gtx GC, data *mapData) uiPage {
 	return genBlocksPage
 }
 
-func (l *uiBigAreasPage) processBackButton(gtx GC, data *mapData) uiPage {
+func (l *uiBigAreasPage) processBackButton(data *mapData) uiPage {
 	data.cityMap.Areas = data.cityMap.Areas[:0]
 	return genCentersAndRoadsPage
 }

@@ -86,14 +86,14 @@ func (l *uiBordersPage) Layout(gtx GC, theme *material.Theme) {
 
 func (l *uiBordersPage) ProcessButtons(gtx GC, ui *uiPages, data *mapData) {
 	if l.btnGenerate.button.Clicked(gtx) {
-		l.processGenerateButton(gtx, data)
+		l.processGenerateButton(data)
 	}
 	if l.btnAccept.button.Clicked(gtx) {
-		ui.currentPage = l.processAcceptButton(gtx, data)
+		ui.currentPage = l.processAcceptButton(data)
 	}
 }
 
-func (l *uiBordersPage) processGenerateButton(gtx GC, data *mapData) {
+func (l *uiBordersPage) processGenerateButton(data *mapData) {
 	var initials generator.InitialValuesMap
 
 	inputString := l.nPoints.field.Text()
@@ -128,7 +128,7 @@ func (l *uiBordersPage) processGenerateButton(gtx GC, data *mapData) {
 	go generateBorders(data.channel, initials, data.invalidator)
 }
 
-func (l *uiBordersPage) processAcceptButton(gtx GC, data *mapData) uiPage {
+func (l *uiBordersPage) processAcceptButton(data *mapData) uiPage {
 	if len(data.cityMap.BorderPoints) == 0 {
 		return genBordersPage
 	}

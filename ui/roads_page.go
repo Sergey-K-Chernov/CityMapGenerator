@@ -94,17 +94,17 @@ func (l *uiCentersAndRoadsPage) Layout(gtx GC, theme *material.Theme) {
 
 func (l *uiCentersAndRoadsPage) ProcessButtons(gtx GC, ui *uiPages, data *mapData) {
 	if l.btnGenerate.button.Clicked(gtx) {
-		l.processGenerateButton(gtx, data)
+		l.processGenerateButton(data)
 	}
 	if l.btnAccept.button.Clicked(gtx) {
-		ui.currentPage = l.processAcceptButton(gtx, data)
+		ui.currentPage = l.processAcceptButton(data)
 	}
 	if l.btnBack.button.Clicked(gtx) {
-		ui.currentPage = l.processBackButton(gtx, data)
+		ui.currentPage = l.processBackButton(data)
 	}
 }
 
-func (l *uiCentersAndRoadsPage) processGenerateButton(gtx GC, data *mapData) {
+func (l *uiCentersAndRoadsPage) processGenerateButton(data *mapData) {
 	var initials generator.InitialValuesRoads
 
 	inputString := l.nCenters.field.Text()
@@ -140,7 +140,7 @@ func (l *uiCentersAndRoadsPage) processGenerateButton(gtx GC, data *mapData) {
 	go generateRoads(data.cityMap, data.channel, initials, data.invalidator)
 }
 
-func (l *uiCentersAndRoadsPage) processAcceptButton(gtx GC, data *mapData) uiPage {
+func (l *uiCentersAndRoadsPage) processAcceptButton(data *mapData) uiPage {
 	if len(data.cityMap.Roads) == 0 {
 		return genCentersAndRoadsPage
 	}
@@ -148,7 +148,7 @@ func (l *uiCentersAndRoadsPage) processAcceptButton(gtx GC, data *mapData) uiPag
 	return genBigAreasPage
 }
 
-func (l *uiCentersAndRoadsPage) processBackButton(gtx GC, data *mapData) uiPage {
+func (l *uiCentersAndRoadsPage) processBackButton(data *mapData) uiPage {
 	data.cityMap.Roads = data.cityMap.Roads[:0]
 	return genBordersPage
 }
