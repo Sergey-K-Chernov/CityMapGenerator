@@ -20,9 +20,9 @@
 		padding:5px;
 		border:1px solid #000000;
 	}
-	.map{
-		display:none;
-		visibility:hidden;
+	.map{<
+		display:block;/*none|block*/
+		visibility:visible;/*hidden|visible*/
 	}
 	</style>
 	<h1>City map generator</h1>
@@ -81,14 +81,7 @@
 			</div>
 		</div>
 		<div class="result">
-			<p>Lorem ipsum</p>
-			<p>Lorem ipsum</p>
-			<p>Lorem ipsum</p>
-			<p>Lorem ipsum</p>
-			<p>Lorem ipsum</p>
-			<p>Lorem ipsum</p>
-			<p>Lorem ipsum</p>
-			<p>Lorem ipsum</p>
+			<img src="data:imagr/png;base64,{{.Image}}">
 		</div>
 	</div>
 </body>

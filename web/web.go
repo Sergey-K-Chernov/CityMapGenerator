@@ -7,11 +7,19 @@ import (
 	"strconv"
 	gen "chirrwick.com/projects/city/generator"
 	"chirrwick.com/projects/city/city_map"
+	"encoding/json"
+	"bytes"
+	"image"
+	"image/color"
+	"image/draw"
+	"image/png"
+	"encoding/base64"
 )
 
 type BordersResponse struct{
 	Error string
 	Map string
+	Image string
 	MinR float64
 	MaxR float64
 	NCorners int
@@ -61,17 +69,31 @@ func readBorderParams(r *http.Request) (bool, BordersResponse, gen.InitialValues
 	initials.NumSides = int(n_corners)
 	initials.VertexShift = vartn
 
-	fmt.Printf("")
-
-	channel := make(chan city_map.Map)
-
-	go gen.GenerateBorders(channel, initials)
-
-	city_map := <- channel
-
-	fmt.Println(city_map)
-
 	return true, resp, initials
+}
+
+func generateBorders(initial_values gen.InitialValuesMap) city_map.Map {
+        channel := make(chan city_map.Map)
+
+        go gen.GenerateBorders(channel, initial_values)
+
+        city_map := <- channel
+
+        return city_map
+}
+
+func makeImageString(city_map city_map.Map) (string, bool) {
+	img := image.NewRGBA(image.Rect(0, 0, 512, 512))
+	green := color.RGBA{0, 255, 0, 255}
+	draw.Draw(img, img.Bounds(), &image.Uniform{green}, image.ZP, draw.Src)
+
+	buffer := new(bytes.Buffer)
+	if err := png.Encode(buffer, img); err != nil {
+		return "", false
+	}
+
+	str := base64.StdEncoding.EncodeToString(buffer.Bytes())
+	return str, true
 }
 
 func bordersHandler(w http.ResponseWriter, r *http.Request){
@@ -79,9 +101,27 @@ func bordersHandler(w http.ResponseWriter, r *http.Request){
 	index_template := template.Must(template.ParseGlob("./html/borders.gohtml"))
 
 	success, response, initial_values := readBorderParams(r)
+
 	fmt.Println()
 	fmt.Println("Borders read successfully? -", success)
 	fmt.Println(initial_values)
+
+
+	city_map := generateBorders(initial_values)
+
+	map_json, err := json.Marshal(city_map)
+	if err != nil {
+                response.Error = "Error while generating map"
+		response.Map = "{}"
+        }
+	fmt.Println(map_json)
+	response.Map = string(map_json)
+
+	img, success := makeImageString(city_map)
+	if success {
+		response.Image = img
+	}
+
 	index_template.ExecuteTemplate(w, "borders.gohtml", response)
 }
 
