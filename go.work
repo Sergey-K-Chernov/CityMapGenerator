@@ -1,7 +1,8 @@
-go 1.23.0
+go 1.23.3
 
 use (
+	./city_map
 	./generator
 	./ui
-	./city_map
+	./web
 )

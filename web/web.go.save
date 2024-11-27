@@ -1,0 +1,59 @@
+
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"html/template"
+)
+
+type Serialized struct {
+	Serialized string
+}
+
+func mainHandler(w http.ResponseWriter, r *http.Request){
+	fmt.Printf("Serving: %s for %s\n", r.Host, r.URL.Path)
+	index_template := template.Must(template.ParseGlob("./html/index.gohtml"))
+	index_template.ExecuteTemplate(w, "index.gohtml", nil)
+}
+
+func readBorderParameters(r *http.Request){
+}
+
+
+func bordersHandler(w http.ResponseWriter, r *http.Request){
+	fmt.Printf("Serving %s for %s", r.Host, r.URL.Path)
+	index_template := template.Must(template.ParseGlob("./html/borders.gohtml"))
+
+	if r.Method != http.MethodGet {
+		index_template.ExecuteTemplate(w, "borders.gohtml", nil)
+		return
+	}
+
+	min_r, err := strconv.Atoi(r.FormValue("min_r"))
+	max_r := r.FormValue("max_r")
+	n_corners := r.FormValue("n_corners")
+	vartn := r.FormValue("variation")
+	
+	fmt.Println()
+	fmt.Println(min_r)
+	fmt.Println(max_r)
+	fmt.Println(n_corners)
+	fmt.Println(vartn)
+
+	var s Serialized
+	s.Serialized = "empty map"
+
+	index_template.ExecuteTemplate(w, "borders.gohtml", s)
+}
+
+func main() {
+	http.HandleFunc("/", mainHandler)
+	http.HandleFunc("/borders", bordersHandler)
+	err := http.ListenAndServe("193.168.173.245:80", nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+}

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Map generator</title>
+</head>
+<body>
+	<h1>City map generator</h1>
+	<h2>Main dimentions</h2>
+	<table>
+	<form action="/roads" method="get">
+		<div>
+			<label for="min_r">Min radius</label>
+		</div>
+		<div>
+			<input name="min_r" id="min_r" value="1000"/>
+		</div>
+		<div>
+			<label for="max_r">Max radius</label>
+		</div>
+		<div>
+			<input name="max_r" id="max_r" value="3000"/>
+		</div>
+		<div>
+			<label for="n_centers">Centers</label>
+		</div>
+		<div>
+			<input name="n_centers" id="n_centers" value="3"/>
+		</div>
+		<div>
+			<label for="branching">Exits from city</label>
+		</div>
+		<div>
+			<input name="branching" id="branching" value="10"/>
+		</div>
+		<div>
+			<button>Generate borders</button>
+		</div>
+	</form>
+	<>
+</body>
+</html>

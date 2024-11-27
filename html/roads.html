@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Map generator</title>
+</head>
+<body>
+	<style>
+	.ui {
+		clear:both;
+	}
+	.inputs{
+		float:left;
+		width:20%;
+		padding:5px;
+	}
+	.result{
+		float:left;
+		width:75%;
+		padding:5px;
+		border:1px solid #000000;
+	}
+	.map{
+		display:none;
+		visibility:hidden;
+	}
+	</style>
+	<h1>City map generator</h1>
+	<h2>Main dimentions</h2>
+	<div class="ui">
+		<div class="inputs">
+		<div>
+		<form action="/roads" method="post">
+			<div>
+				<label for="min_r">Min radius</label>
+			</div>
+			<div>
+				<input name="min_r" id="min_r" value="1000"/>
+			</div>
+			<div>
+				<label for="max_r">Max radius</label>
+			</div>
+			<div>
+				<input name="max_r" id="max_r" value="3000"/>
+			</div>
+			<div>
+				<label for="n_centers">Centers</label>
+			</div>
+			<div>
+				<input name="n_centers" id="n_centers" value="3"/>
+			</div>
+			<div>
+				<label for="branching">Exits from city</label>
+			</div>
+			<div>
+				<input name="branching" id="branching" value="10"/>
+			</div>
+			<div>
+				<button>Generate roads</button>
+			</div>
+		</form>
+		</div>
+		<div>
+		<form action="/areas"
+			<hr/>
+			<!-- This is probably a hack. I am no frontend dev. -->
+			<div class="map">
+				<label for="map">Field below is a serialized map</label>
+			</div>
+			<div class="map">
+				<input name="map" id="map" value="{{ printf "%s" .Serialized }}"/>
+			</div>
+			<div>
+				<button>Accept roads</button>
+			</div>
+		</form>
+		</div>
+	<div class="result">
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+<p>Lorem ipsum</p>
+
+	</div>
+</body>
+</html>
