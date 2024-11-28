@@ -14,6 +14,7 @@ import (
 	"image/draw"
 	"image/png"
 	"encoding/base64"
+	md "chirrwick.com/projects/city/draw"
 )
 
 type BordersResponse struct{
@@ -86,6 +87,9 @@ func makeImageString(city_map city_map.Map) (string, bool) {
 	img := image.NewRGBA(image.Rect(0, 0, 512, 512))
 	green := color.RGBA{0, 255, 0, 255}
 	draw.Draw(img, img.Bounds(), &image.Uniform{green}, image.ZP, draw.Src)
+
+	map_img := md.Draw(city_map)
+	img = map_img
 
 	buffer := new(bytes.Buffer)
 	if err := png.Encode(buffer, img); err != nil {
