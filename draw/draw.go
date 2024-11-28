@@ -7,7 +7,7 @@ import (
 	"github.com/llgcode/draw2d"
 	"github.com/llgcode/draw2d/draw2dimg"
 	"chirrwick.com/projects/city/city_map"
-	_ "chirrwick.com/projects/city/generator/genmath"
+	gm "chirrwick.com/projects/city/generator/genmath"
 )
 
 const IMAGE_SIZE = 512
@@ -88,6 +88,39 @@ func drawAreas(data *drawData) {
 }
 
 func drawBlocks(data *drawData) {
+	if len(data.Map.Blocks) <= 0 {
+		return
+	}
+
+	for _, block := range data.Map.Blocks {
+		data.Gc.SetFillColor(color.RGBA{0xff, 0xf6, 0xdd, 0xff})
+		data.Gc.SetStrokeColor(color.RGBA{0x00, 0x00, 0x00, 0xff})
+		data.Gc.SetLineWidth(1)
+		data.Gc.BeginPath()
+
+		end_pnt := block.Points[len(block.Points) - 1]
+		data.Gc.MoveTo(end_pnt.X * data.Scale, end_pnt.Y * data.Scale)
+		for _, pnt := range block.Points {
+			data.Gc.LineTo(pnt.X * data.Scale, pnt.Y * data.Scale)
+		}
+
+		data.Gc.Close()
+		data.Gc.FillStroke()
+		drawStreets(data, block.Streets)
+	}
+}
+
+func drawStreets(data *drawData, streets []gm.LineSegment) {
+	data.Gc.SetLineWidth(0.7)
+	for _, str := range streets {
+		data.Gc.BeginPath()
+
+		data.Gc.MoveTo(str.Begin.X * data.Scale, str.Begin.Y * data.Scale)
+		data.Gc.LineTo(str.End.X * data.Scale, str.End.Y * data.Scale)
+
+		data.Gc.Close()
+		data.Gc.Stroke()
+	}
 
 }
 
