@@ -42,6 +42,7 @@ func main() {
 	http.HandleFunc("/borders", bordersHandler)
 	http.HandleFunc("/roads", roadsHandler)
 	http.HandleFunc("/areas", areasHandler)
+	http.HandleFunc("/blocks", blocksHandler)
 	err := http.ListenAndServe("193.168.173.245:80", nil)
 	if err != nil {
 		fmt.Println(err)
