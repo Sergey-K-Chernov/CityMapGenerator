@@ -61,7 +61,30 @@ func drawBorders(data *drawData) {
 
 
 func drawAreas(data *drawData) {
+	if len(data.Map.Areas) <= 0 {
+		return
+	}
 
+	for _, area := range data.Map.Areas {
+		switch area.Type {
+			case city_map.AreaIndustrial: 
+				data.Gc.SetFillColor(color.RGBA{0xdd, 0xdd, 0xdd, 0xff})
+			case city_map.AreaPark:
+				data.Gc.SetFillColor(color.RGBA{0xcc, 0xff, 0xcc, 0xff})
+		}
+
+		data.Gc.BeginPath()
+
+		end_pnt := area.Points[len(area.Points)-1]
+		data.Gc.MoveTo(end_pnt.X * data.Scale, end_pnt.Y * data.Scale)
+
+		for _, pnt := range area.Points {
+			data.Gc.LineTo(pnt.X * data.Scale, pnt.Y * data.Scale)
+		}
+
+		data.Gc.Close()
+		data.Gc.Fill()
+	}
 }
 
 func drawBlocks(data *drawData) {
