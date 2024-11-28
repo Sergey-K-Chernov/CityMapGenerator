@@ -69,6 +69,25 @@ func drawBlocks(data *drawData) {
 }
 
 func drawRoads(data *drawData) {
+	if len(data.Map.Roads) <= 0 {
+		return
+	}
+	
+	// Colors need unification with ui?
+	data.Gc.SetStrokeColor(color.RGBA{0x00, 0x00, 0x00, 0xff})
+	data.Gc.SetLineWidth(2)
 
+	for _, rd := range data.Map.Roads {
+		data.Gc.BeginPath()
+		
+		pnt := rd.Points[0]
+		data.Gc.MoveTo(pnt.X * data.Scale, pnt.Y * data.Scale)
+		for _, pnt := range rd.Points {
+			data.Gc.LineTo(pnt.X * data.Scale, pnt.Y * data.Scale)
+		}
+		
+		data.Gc.Close()
+		data.Gc.Stroke()
+	}
 }
 

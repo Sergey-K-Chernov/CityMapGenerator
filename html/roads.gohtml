@@ -38,25 +38,25 @@
 					<label for="min_r">Min radius</label>
 				</div>
 				<div>
-					<input name="min_r" id="min_r" value="{{if .Default}} {{printf "200"}} {{else}} {{printf "%.2f" .MinR}} {{end}}"/>
+					<input name="min_r" id="min_r" value="{{if .Default}}{{printf "200"}}{{else}}{{printf "%.2f" .MinR}}{{end}}"/>
 				</div>
 				<div>
 					<label for="max_r">Max radius</label>
 				</div>
 				<div>
-					<input name="max_r" id="max_r" value="{{if .Default}} {{printf "500"}} {{else}} {{printf "%.2f" .MaxR}} {{end}}"/>
+					<input name="max_r" id="max_r" value="{{if .Default}}{{printf "500"}}{{else}}{{printf "%.2f" .MaxR}}{{end}}"/>
 				</div>
 				<div>
 					<label for="n_centers">Centers</label>
 				</div>
 				<div>
-					<input name="n_centers" id="n_centers" value="{{if .Default}} {{printf "3"}} {{else}} {{printf "%d" .NCenters}} {{end}}"/>
+					<input name="n_centers" id="n_centers" value="{{if .Default}}{{printf "3"}}{{else}}{{printf "%d" .NCenters}}{{end}}"/>
 				</div>
 				<div>
 					<label for="branching">Road exits</label>
 				</div>
 				<div>
-					<input name="branching" id="branching" value="{{if .Default}} {{printf "10"}} {{else}} {{printf "%d" .Branching}} {{end}}"/>
+					<input name="branching" id="branching" value="{{if .Default}}{{printf "10"}}{{else}}{{printf "%d" .Branching}}{{end}}"/>
 				</div>
 				<div>
 					<button>Generate roads</button>

@@ -82,9 +82,9 @@ func bordersHandler(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	fmt.Println()
-	fmt.Println("Borders read successfully? -", success)
-	fmt.Println(initial_values)
+	//fmt.Println()
+	//fmt.Println("Borders read successfully? -", success)
+	//fmt.Println(initial_values)
 
 	city_map := generateBorders(initial_values)
 
@@ -93,7 +93,7 @@ func bordersHandler(w http.ResponseWriter, r *http.Request){
                 response.Error = "Error while generating map"
 		response.Map = "{}"
         }
-	fmt.Println(map_json)
+	//fmt.Println(map_json)
 	response.Map = string(map_json)
 
 	img, success := makeImageString(city_map)

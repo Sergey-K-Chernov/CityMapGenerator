@@ -25,7 +25,10 @@ func readRoadsParams(r *http.Request) (bool, RoadsResponse, gen.InitialValuesRoa
 	resp := RoadsResponse{Error: "", Map: "{}"}
 	resp.Default = false
 
+	fmt.Println("Prepare initials")
 	var initials gen.InitialValuesRoads
+
+	fmt.Println("ReadMap")
 
 	map_string := r.FormValue("map")
 	resp.Map = map_string
@@ -38,12 +41,16 @@ func readRoadsParams(r *http.Request) (bool, RoadsResponse, gen.InitialValuesRoa
 	}
 	resp.Default = true
 
+	fmt.Println("Ok. Read min r")
+
 	min_r, err := strconv.ParseFloat(r.FormValue("min_r"), 32)
         if err != nil {
 		resp.Error = "Cannot read min radius"
 		return false, resp, initials, city_map
 	}
 	resp.MinR = min_r
+
+	fmt.Println("Ok. Read max r")
 
         max_r, err := strconv.ParseFloat(r.FormValue("max_r"), 32)
         if err != nil {
@@ -52,6 +59,8 @@ func readRoadsParams(r *http.Request) (bool, RoadsResponse, gen.InitialValuesRoa
 	}
 	resp.MaxR = max_r
 
+	fmt.Println("Ok. Read n centers")
+
 	n_centers, err := strconv.ParseInt(r.FormValue("n_centers"), 10, 32)
         if err != nil {
                 resp.Error = "Cannot read centers"
@@ -59,12 +68,16 @@ func readRoadsParams(r *http.Request) (bool, RoadsResponse, gen.InitialValuesRoa
         }
 	resp.NCenters = int(n_centers)
 
+	fmt.Println("Ok. Read branching")
+
 	branching, err := strconv.ParseInt(r.FormValue("branching"), 10, 32)
 	if err != nil {
                 resp.Error = "Cannot read road exits"
                 return false, resp, initials, city_map
         }
 	resp.Branching = int(branching)
+
+	fmt.Println("Ok.")
 
 	initials.Raduis.Min = min_r
 	initials.Raduis.Max = max_r
@@ -76,11 +89,9 @@ func readRoadsParams(r *http.Request) (bool, RoadsResponse, gen.InitialValuesRoa
 }
 
 func generateRoads(initial_values gen.InitialValuesRoads, cm city_map.Map) city_map.Map {
-	channel := make(chan city_map.Map)
+	channel := make(chan city_map.Map) // Bad API. Needs refactoring
 
-	go gen.GenerateRoads(cm, channel, initial_values)
-
-	cm = <- channel
+	cm.Roads = gen.GenerateRoads(cm, channel, initial_values)
 
 	return cm
 }
@@ -107,6 +118,8 @@ func roadsHandler(w http.ResponseWriter, r *http.Request){
 	fmt.Println(initial_values)
 
 	city_map = generateRoads(initial_values, city_map)
+
+	fmt.Println("Ok")
 
 	map_json, err := json.Marshal(city_map)
 	if err != nil {
