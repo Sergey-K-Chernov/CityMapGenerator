@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Map generator</title>
+</head>
+<body>
+	<style>
+	.ui {
+		clear:both;
+	}
+	.inputs{
+		float:left;
+		width:20%;
+		padding:5px;
+	}
+	.result{
+		float:left;
+		width:75%;
+		padding:5px;
+		border:0px solid #000000;
+	}
+	.map{<
+		display:block;/*none|block*/
+		visibility:visible;/*hidden|visible*/
+	}
+	</style>
+	<h1>City map generator</h1>
+	<h2>Big roads</h2>
+	{{ if ne .Error `` }}
+	<p>{{printf "%s" .Error}}</p>
+	{{ end }}
+	<div class="ui">
+		<div class="inputs">
+			<div>
+			<form action="/roads" method="post">
+				<div>
+					<label for="min_r">Min radius</label>
+				</div>
+				<div>
+					<input name="min_r" id="min_r" value="{{if .Default}} {{printf "200"}} {{else}} {{printf "%.2f" .MinR}} {{end}}"/>
+				</div>
+				<div>
+					<label for="max_r">Max radius</label>
+				</div>
+				<div>
+					<input name="max_r" id="max_r" value="{{if .Default}} {{printf "500"}} {{else}} {{printf "%.2f" .MaxR}} {{end}}"/>
+				</div>
+				<div>
+					<label for="n_centers">Centers</label>
+				</div>
+				<div>
+					<input name="n_centers" id="n_centers" value="{{if .Default}} {{printf "3"}} {{else}} {{printf "%d" .NCenters}} {{end}}"/>
+				</div>
+				<div>
+					<label for="branching">Road exits</label>
+				</div>
+				<div>
+					<input name="branching" id="branching" value="{{if .Default}} {{printf "10"}} {{else}} {{printf "%d" .Branching}} {{end}}"/>
+				</div>
+				<div>
+					<button>Generate roads</button>
+				</div>
+				<!-- This is probably a hack. I am no frontend dev. -->
+				<div class="map">
+					<label for="map">Field below is a serialized map</label>
+				</div>
+				<div class="map">
+					<input name="map" id="map" value="{{ printf "%s" .Map }}"/>
+				</div>
+			</form>
+			</div>
+
+			<div>
+			<form action="/areas" method="get">
+				<hr/>
+				<!-- This is probably a hack. I am no frontend dev. -->
+				<div class="map">
+					<input name="map" id="map" value="{{ printf "%s" .Map }}"/>
+				</div>
+				<div>
+					<button>Accept roads</button>
+				</div>
+			</form>
+			</div>
+		</div>
+		<div class="result">
+			<img src="data:imagr/png;base64,{{.Image}}">
+		</div>
+	</div>
+</body>
+</html>
