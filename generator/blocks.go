@@ -45,11 +45,15 @@ func GenerateBlocks(cityMap city_map.Map, chan_map chan city_map.Map, initials I
 		blocks_area += area
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(len(blocks))
 	for i := range blocks {
 		go func() {
+			defer wg.Done()
 			blocks[i] = generateStreets(blocks[i], initials.Size.Min*2, initials.Size.Max/2)
 		}()
 	}
+	wg.Wait()
 
 	//chan_map <- city_map
 	return blocks
