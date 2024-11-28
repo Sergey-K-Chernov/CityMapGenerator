@@ -21,45 +21,45 @@
 		border:0px solid #000000;
 	}
 	.map{<
-		display:none;/*none|block*/
-		visibility:hidden;/*hidden|visible*/
+		display:block;/*none|block*/
+		visibility:visible;/*hidden|visible*/
 	}
 	</style>
 	<h1>City map generator</h1>
-	<h2>Big roads</h2>
+	<h2>Non-residential areas</h2>
 	{{ if ne .Error `` }}
 	<p>{{printf "%s" .Error}}</p>
 	{{ end }}
 	<div class="ui">
 		<div class="inputs">
 			<div>
-			<form action="/roads" method="post">
+			<form action="/areas" method="post">
 				<div>
-					<label for="min_r">Min radius</label>
+					<label for="n_industrial">Industrial areas</label>
 				</div>
 				<div>
-					<input name="min_r" id="min_r" value="{{if .Default}}{{printf "200"}}{{else}}{{printf "%.2f" .MinR}}{{end}}"/>
+					<input name="n_industrial" id="n_industrial" value="{{if .Default}}{{printf "2"}}{{else}}{{printf "%d" .NIndustrial}}{{end}}"/>
 				</div>
 				<div>
-					<label for="max_r">Max radius</label>
+					<label for="percentage_industrial">Industrial %</label>
 				</div>
 				<div>
-					<input name="max_r" id="max_r" value="{{if .Default}}{{printf "500"}}{{else}}{{printf "%.2f" .MaxR}}{{end}}"/>
+					<input name="percentage_industrial" id="percentage_industrial" value="{{if .Default}}{{printf "10"}}{{else}}{{printf "%.2f" .PercentageIndustrial}}{{end}}"/>
 				</div>
 				<div>
-					<label for="n_centers">Centers</label>
+					<label for="n_parks">Parks</label>
 				</div>
 				<div>
-					<input name="n_centers" id="n_centers" value="{{if .Default}}{{printf "3"}}{{else}}{{printf "%d" .NCenters}}{{end}}"/>
+					<input name="n_parks" id="n_parks" value="{{if .Default}}{{printf "2"}}{{else}}{{printf "%d" .NParks}}{{end}}"/>
 				</div>
 				<div>
-					<label for="branching">Road exits</label>
+					<label for="percentage_parks">Parks %</label>
 				</div>
 				<div>
-					<input name="branching" id="branching" value="{{if .Default}}{{printf "10"}}{{else}}{{printf "%d" .Branching}}{{end}}"/>
+					<input name="percentage_parks" id="percentage_parks" value="{{if .Default}}{{printf "10"}}{{else}}{{printf "%.2f" .PercentageParks}}{{end}}"/>
 				</div>
 				<div>
-					<button>Generate roads</button>
+					<button>Generate areas</button>
 				</div>
 				<!-- This is probably a hack. I am no frontend dev. -->
 				<div class="map">
@@ -72,14 +72,14 @@
 			</div>
 
 			<div>
-			<form action="/areas" method="get">
+			<form action="/blocks" method="get">
 				<hr/>
 				<!-- This is probably a hack. I am no frontend dev. -->
 				<div class="map">
 					<input name="map" id="map" value="{{ printf "%s" .Map }}"/>
 				</div>
 				<div>
-					<button>Accept roads</button>
+					<button>Accept areas</button>
 				</div>
 			</form>
 			</div>
