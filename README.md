@@ -23,3 +23,9 @@ Recomended initial values for generation:
 1. Blocks size > 1/20 of max radius.
 
 Other values are not prohibited but can lead to odd results.
+
+Usage: 
+go run ./ui for standalone version.
+go run ./web for web server on :80 port.
+
+Both are still under development.
