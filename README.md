@@ -24,8 +24,11 @@ Recomended initial values for generation:
 
 Other values are not prohibited but can lead to odd results.
 
-Usage: 
+Usage:
+
 go run ./ui for standalone version.
+
 go run ./web for web server on :80 port.
+
 
 Both are still under development.
