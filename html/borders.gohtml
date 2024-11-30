@@ -38,25 +38,25 @@
 					<label for="min_r">Min radius</label>
 				</div>
 				<div>
-					<input name="min_r" id="min_r" value="{{ printf "%.2f" .MinR}}"/>
+					<input name="min_r" id="min_r" value="{{if .Default}}{{printf "1000"}}{{else}}{{ printf "%.2f" .MinR}}{{end}}"/>
 				</div>
 				<div>
 					<label for="max_r">Max radius</label>
 				</div>
 				<div>
-					<input name="max_r" id="max_r" value="{{printf "%.2f" .MaxR}}"/>
+					<input name="max_r" id="max_r" value="{{if .Default}}{{printf "3000"}}{{else}}{{printf "%.2f" .MaxR}}{{end}}"/>
 				</div>
 				<div>
 					<label for="n_corners">Corners</label>
 				</div>
 				<div>
-					<input name="n_corners" id="n_corners" value="{{printf "%d" .NCorners}}"/>
+					<input name="n_corners" id="n_corners" value="{{if .Default}}{{printf "3"}}{{else}}{{printf "%d" .NCorners}}{{end}}"/>
 				</div>
 				<div>
 					<label for="variation">Variation</label>
 				</div>
 				<div>
-					<input name="variation" id="variation" value="{{printf "%.2f" .Variation}}"/>
+					<input name="variation" id="variation" value="{{if .Default}}{{printf "300"}}{{else}}{{printf "%.2f" .Variation}}{{end}}"/>
 				</div>
 				<div>
 					<button>Generate borders</button>

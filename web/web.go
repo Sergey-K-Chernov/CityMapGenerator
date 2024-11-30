@@ -11,6 +11,9 @@ import (
 	"image/draw"
 	"image/png"
 	"encoding/base64"
+	"strings"
+	"strconv"
+	"encoding/json"
 	md "chirrwick.com/projects/city/draw"
 )
 
@@ -49,4 +52,101 @@ func main() {
 		return
 	}
 
+}
+
+
+const COOKIE_MAX_SIZE = 4096
+
+func jsonToCookieStrings(json_value []byte) (strs []string) {
+	str := string(json_value)
+	str = strings.ReplaceAll(str, "\"", "%22")
+	
+	size := len(str)
+	n := size / COOKIE_MAX_SIZE + 1
+	for i := 0; i < n; i++ {
+		i1 := i*COOKIE_MAX_SIZE
+		i2 := ((i+1)*COOKIE_MAX_SIZE)
+		i2 = min(i2, len(str))
+		strs = append(strs, str[i1:i2])
+	}
+	return strs
+}
+
+
+func cookieStringsToJson(strs []string) []byte {
+	str := ""
+	for _, s := range strs {
+		str += s
+	}
+	
+	str = strings.ReplaceAll(str, "%22", "\"")
+	return []byte(str)
+}
+
+
+func setMapCookies(m city_map.Map, w http.ResponseWriter) {
+	map_json, err := json.Marshal(m)
+
+	if err != nil {
+		fmt.Println("Map to json error: ")
+		fmt.Println(err)
+		return
+	}
+
+	cs := jsonToCookieStrings(map_json)
+	cookie := &http.Cookie{
+		Name: "MapCookiesNum",
+		Value: strconv.Itoa(len(cs)),
+		MaxAge: 3600,
+		SameSite: http.SameSiteStrictMode,
+	}
+	http.SetCookie(w, cookie)
+	
+	for i, s := range cs {
+		cookie := &http.Cookie{
+			Name: "Map" + strconv.Itoa(i),
+			Value: s,
+			MaxAge: 3600,
+			SameSite: http.SameSiteStrictMode,
+		}
+		http.SetCookie(w, cookie)
+	}
+}
+
+func getMapFromCookies(r *http.Request) (m city_map.Map) {
+	cookie, err := r.Cookie("MapCookiesNum")
+	if err != nil {
+		fmt.Println("No cookies found: ")
+		fmt.Println(err)
+		return
+	}
+
+	n, err := strconv.Atoi(cookie.Value)
+	if err != nil {
+		fmt.Println("Error reading cookies")
+		fmt.Println(err)
+		return
+	}
+
+	strs := make([]string, 0)
+	for i := range n {
+		cookie, err :=  r.Cookie("Map" + strconv.Itoa(i))
+		if err != nil {
+			fmt.Println("Error reading cookies")
+			fmt.Println(err)
+			return
+		}
+		strs = append(strs, cookie.Value)
+	}
+
+	map_json := cookieStringsToJson(strs)
+
+	err = json.Unmarshal(map_json, &m)
+	if err != nil {
+		fmt.Println("Error unmarshalling map:")
+		fmt.Println(err)
+		return
+	}
+
+	return
 }

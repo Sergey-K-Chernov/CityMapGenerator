@@ -7,10 +7,11 @@ import (
 	"strconv"
 	gen "chirrwick.com/projects/city/generator"
 	"chirrwick.com/projects/city/city_map"
-	"encoding/json"
+	_ "encoding/json"
 )
 
 type BordersResponse struct{
+	Default bool
 	Error string
 	Map string
 	Image string
@@ -71,15 +72,34 @@ func generateBorders(initial_values gen.InitialValuesMap) city_map.Map {
 }
 
 
-func bordersHandler(w http.ResponseWriter, r *http.Request){
-	fmt.Printf("Serving %s for %s", r.Host, r.URL.Path)
-	index_template := template.Must(template.ParseGlob("./html/borders.gohtml"))
+func handleGetBorders(w http.ResponseWriter, r *http.Request) BordersResponse {
+	response := BordersResponse{Default: true, Error: "", Map: "{}"}
+	cookie := &http.Cookie{
+			Name: "MapCookiesNum",
+			Value: "1",
+			MaxAge: 3600,
+			SameSite: http.SameSiteStrictMode,
+		}
+	http.SetCookie(w, cookie)
 
+	cookie2 := &http.Cookie{
+			Name: "Map0",
+			Value: "{}",
+			MaxAge: 3600,
+			SameSite: http.SameSiteStrictMode,
+		}
+	http.SetCookie(w, cookie2)
+
+	return response
+}
+
+
+func handlePostBorders(w http.ResponseWriter, r *http.Request) BordersResponse {
 	success, response, initial_values := readBorderParams(r)
 
 	if !success {
-		index_template.ExecuteTemplate(w, "borders.gohtml", response)
-		return
+		//index_template.ExecuteTemplate(w, "borders.gohtml", response)
+		return response
 	}
 
 	//fmt.Println()
@@ -88,6 +108,7 @@ func bordersHandler(w http.ResponseWriter, r *http.Request){
 
 	city_map := generateBorders(initial_values)
 
+/*
 	map_json, err := json.Marshal(city_map)
 	if err != nil {
                 response.Error = "Error while generating map"
@@ -95,10 +116,39 @@ func bordersHandler(w http.ResponseWriter, r *http.Request){
         }
 	//fmt.Println(map_json)
 	response.Map = string(map_json)
+	
+
+	fmt.Println(string(map_json))
+
+	cookie := &http.Cookie{
+			Name: "Map",
+			Value: string(map_json),
+			MaxAge: 3600,
+			SameSite: http.SameSiteNoneMode,
+		}
+	http.SetCookie(w, cookie)
+*/
+	setMapCookies(city_map, w)
 
 	img, success := makeImageString(city_map)
 	if success {
 		response.Image = img
+	}
+
+	return response
+}
+
+func bordersHandler(w http.ResponseWriter, r *http.Request){
+	fmt.Printf("Serving %s for %s", r.Host, r.URL.Path)
+	index_template := template.Must(template.ParseGlob("./html/borders.gohtml"))
+	
+	var response BordersResponse
+	switch r.Method {
+		case http.MethodGet:
+			response = handleGetBorders(w, r)
+		case http.MethodPost:
+			response = handlePostBorders(w, r)
+		
 	}
 
 	index_template.ExecuteTemplate(w, "borders.gohtml", response)
