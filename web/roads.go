@@ -166,7 +166,7 @@ func handlePostRoads(w http.ResponseWriter, r *http.Request) RoadsResponse {
                 response.Error = "Error while generating roads"
 		response.Map = "{}"
         }
-	fmt.Println(map_json)
+//	fmt.Println(map_json)
 	response.Map = string(map_json)
 	
 /*

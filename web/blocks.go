@@ -26,7 +26,7 @@ func readBlocksParams(r *http.Request) (bool, BlocksResponse, gen.InitialValuesB
 	var initials gen.InitialValuesBlocks
 
 	fmt.Println("ReadMap")
-
+/*
 	map_string := r.FormValue("map")
 	resp.Map = map_string
 	map_json := []byte(map_string)
@@ -37,6 +37,9 @@ func readBlocksParams(r *http.Request) (bool, BlocksResponse, gen.InitialValuesB
 		return false, resp, initials, city_map
 	}
 	resp.Default = true
+*/
+
+	city_map := getMapFromCookies(r)
 
 	fmt.Println("Ok. Read min")
 
@@ -74,10 +77,23 @@ func generateBlocks(initial_values gen.InitialValuesBlocks, cm city_map.Map) cit
 }
 
 
-func blocksHandler(w http.ResponseWriter, r *http.Request){
-	fmt.Printf("Serving %s for %s", r.Host, r.URL.Path)
-	index_template := template.Must(template.ParseGlob("./html/blocks.gohtml"))
 
+func handleGetBlocks(w http.ResponseWriter, r *http.Request) BlocksResponse {
+	response := BlocksResponse{Default: true, Error: "", Map: "{}"}
+
+	city_map := getMapFromCookies(r)
+
+	img, success := makeImageString(city_map)
+	if success {
+	    response.Image = img
+	}
+
+	return response
+}
+
+
+func handlePostBlocks(w http.ResponseWriter, r *http.Request) BlocksResponse {
+	
 	success, response, initial_values, city_map := readBlocksParams(r)
 
 	if !success {
@@ -85,9 +101,7 @@ func blocksHandler(w http.ResponseWriter, r *http.Request){
 		if success {
 		    response.Image = img
 		}
-		index_template.ExecuteTemplate(w, "blocks.gohtml", response)
-		
-		return
+		return response
 	}
 
 	fmt.Println()
@@ -106,9 +120,27 @@ func blocksHandler(w http.ResponseWriter, r *http.Request){
 	fmt.Println(map_json)
 	response.Map = string(map_json)
 
+	setMapCookies(city_map, w)
+
 	img, success := makeImageString(city_map)
 	if success {
 		response.Image = img
+	}
+
+	return response
+}
+
+
+func blocksHandler(w http.ResponseWriter, r *http.Request){
+	fmt.Printf("Serving %s for %s", r.Host, r.URL.Path)
+	index_template := template.Must(template.ParseGlob("./html/blocks.gohtml"))
+
+	var response BlocksResponse
+	switch r.Method {
+		case http.MethodGet:
+			response = handleGetBlocks(w,r)
+		case http.MethodPost:
+			response = handlePostBlocks(w,r)
 	}
 
 	index_template.ExecuteTemplate(w, "blocks.gohtml", response)

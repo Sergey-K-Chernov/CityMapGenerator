@@ -29,6 +29,7 @@ func readAreasParams(r *http.Request) (bool, AreasResponse, gen.InitialValuesAre
 
 	fmt.Println("ReadMap")
 
+/*
 	map_string := r.FormValue("map")
 	resp.Map = map_string
 	map_json := []byte(map_string)
@@ -38,6 +39,10 @@ func readAreasParams(r *http.Request) (bool, AreasResponse, gen.InitialValuesAre
 		resp.Error = "Cannot get map from you"
 		return false, resp, initials, city_map
 	}
+*/
+
+	city_map := getMapFromCookies(r)
+
 	resp.Default = true
 
 	fmt.Println("Ok. Read indus")
@@ -98,20 +103,27 @@ func generateAreas(initial_values gen.InitialValuesAreas, cm city_map.Map) city_
 }
 
 
-func areasHandler(w http.ResponseWriter, r *http.Request){
-	fmt.Printf("Serving %s for %s", r.Host, r.URL.Path)
-	index_template := template.Must(template.ParseGlob("./html/areas.gohtml"))
+func handleGetAreas(w http.ResponseWriter, r *http.Request) AreasResponse {
+	response := AreasResponse{Default: true, Error: "", Map: "{}"}
+	city_map := getMapFromCookies(r)
 
+	img, success := makeImageString(city_map)
+	if success {
+		response.Image = img
+	}
+
+	return response
+}
+
+func handlePostAreas(w http.ResponseWriter, r *http.Request) AreasResponse {
 	success, response, initial_values, city_map := readAreasParams(r)
 
 	if !success {
 		img, success := makeImageString(city_map)
 		if success {
-		    response.Image = img
+			response.Image = img
 		}
-		index_template.ExecuteTemplate(w, "areas.gohtml", response)
-		
-		return
+		return response
 	}
 
 	fmt.Println()
@@ -127,12 +139,30 @@ func areasHandler(w http.ResponseWriter, r *http.Request){
                 response.Error = "Error while generating or serializing areas"
 		response.Map = "{}"
         }
-	fmt.Println(map_json)
+	//fmt.Println(map_json)
 	response.Map = string(map_json)
+
+	setMapCookies(city_map, w)
 
 	img, success := makeImageString(city_map)
 	if success {
 		response.Image = img
+	}
+
+	return response
+}
+
+
+func areasHandler(w http.ResponseWriter, r *http.Request){
+	fmt.Printf("Serving %s for %s", r.Host, r.URL.Path)
+	index_template := template.Must(template.ParseGlob("./html/areas.gohtml"))
+
+	var response AreasResponse
+	switch r.Method {
+		case http.MethodGet:
+			response = handleGetAreas(w,r)
+		case http.MethodPost:
+			response = handlePostAreas(w,r)
 	}
 
 	index_template.ExecuteTemplate(w, "areas.gohtml", response)

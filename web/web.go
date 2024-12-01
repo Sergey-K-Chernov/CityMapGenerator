@@ -55,7 +55,7 @@ func main() {
 }
 
 
-const COOKIE_MAX_SIZE = 4096
+const COOKIE_MAX_SIZE = 4000
 
 func jsonToCookieStrings(json_value []byte) (strs []string) {
 	str := string(json_value)
@@ -103,6 +103,7 @@ func setMapCookies(m city_map.Map, w http.ResponseWriter) {
 	http.SetCookie(w, cookie)
 	
 	for i, s := range cs {
+		fmt.Printf("Set Cookie %d\n", i)
 		cookie := &http.Cookie{
 			Name: "Map" + strconv.Itoa(i),
 			Value: s,
