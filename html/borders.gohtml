@@ -63,17 +63,9 @@
 				</div>
 			</form>
 			</div>
-
+			<br>
 			<div>
 			<form action="/roads" method="get">
-				<hr/>
-				<!-- This is probably a hack. I am no frontend dev. -->
-				<div class="map">
-					<label for="map">Field below is a serialized map</label>
-				</div>
-				<div class="map">
-					<input name="map" id="map" value="{{ printf "%s" .Map }}"/>
-				</div>
 				<div>
 					<button>Accept borders</button>
 				</div>
@@ -81,7 +73,9 @@
 			</div>
 		</div>
 		<div class="result">
+			{{if ne .Image  `` }}
 			<img src="data:imagr/png;base64,{{.Image}}">
+			{{end}}
 		</div>
 	</div>
 </body>

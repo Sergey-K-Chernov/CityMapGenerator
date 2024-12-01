@@ -61,23 +61,11 @@
 				<div>
 					<button>Generate roads</button>
 				</div>
-				<!-- This is probably a hack. I am no frontend dev. -->
-				<div class="map">
-					<label for="map">Field below is a serialized map</label>
-				</div>
-				<div class="map">
-					<input name="map" id="map" value="{{ printf "%s" .Map }}"/>
-				</div>
 			</form>
 			</div>
-
+			<br>
 			<div>
 			<form action="/areas" method="get">
-				<hr/>
-				<!-- This is probably a hack. I am no frontend dev. -->
-				<div class="map">
-					<input name="map" id="map" value="{{ printf "%s" .Map }}"/>
-				</div>
 				<div>
 					<button>Accept roads</button>
 				</div>

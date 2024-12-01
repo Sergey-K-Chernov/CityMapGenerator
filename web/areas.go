@@ -7,13 +7,11 @@ import (
 	"strconv"
 	gen "chirrwick.com/projects/city/generator"
 	"chirrwick.com/projects/city/city_map"
-	"encoding/json"
 )
 
 type AreasResponse struct{
 	Default bool
 	Error string
-	Map string
 	Image string
 	NIndustrial int
 	PercentageIndustrial float64
@@ -22,24 +20,12 @@ type AreasResponse struct{
 }
 
 func readAreasParams(r *http.Request) (bool, AreasResponse, gen.InitialValuesAreas, city_map.Map) {
-	resp := AreasResponse{Error: "", Map: "{}", Default: false}
+	resp := AreasResponse{Error: "", Default: false}
 
 	fmt.Println("Prepare initials for areas")
 	var initials gen.InitialValuesAreas
 
 	fmt.Println("ReadMap")
-
-/*
-	map_string := r.FormValue("map")
-	resp.Map = map_string
-	map_json := []byte(map_string)
-	var city_map city_map.Map
-	err := json.Unmarshal(map_json, &city_map)
-	if err != nil {
-		resp.Error = "Cannot get map from you"
-		return false, resp, initials, city_map
-	}
-*/
 
 	city_map := getMapFromCookies(r)
 
@@ -104,7 +90,7 @@ func generateAreas(initial_values gen.InitialValuesAreas, cm city_map.Map) city_
 
 
 func handleGetAreas(w http.ResponseWriter, r *http.Request) AreasResponse {
-	response := AreasResponse{Default: true, Error: "", Map: "{}"}
+	response := AreasResponse{Default: true, Error: ""}
 	city_map := getMapFromCookies(r)
 
 	img, success := makeImageString(city_map)
@@ -133,14 +119,6 @@ func handlePostAreas(w http.ResponseWriter, r *http.Request) AreasResponse {
 	city_map = generateAreas(initial_values, city_map)
 
 	fmt.Println("Ok")
-
-	map_json, err := json.Marshal(city_map)
-	if err != nil {
-                response.Error = "Error while generating or serializing areas"
-		response.Map = "{}"
-        }
-	//fmt.Println(map_json)
-	response.Map = string(map_json)
 
 	setMapCookies(city_map, w)
 

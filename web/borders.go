@@ -13,7 +13,6 @@ import (
 type BordersResponse struct{
 	Default bool
 	Error string
-	Map string
 	Image string
 	MinR float64
 	MaxR float64
@@ -22,7 +21,7 @@ type BordersResponse struct{
 }
 
 func readBorderParams(r *http.Request) (bool, BordersResponse, gen.InitialValuesMap) {
-	resp := BordersResponse{Error: "", Map: "{}"}
+	resp := BordersResponse{Error: ""}
 	var initials gen.InitialValuesMap
 
 	min_r, err := strconv.ParseFloat(r.FormValue("min_r"), 32)
@@ -73,7 +72,7 @@ func generateBorders(initial_values gen.InitialValuesMap) city_map.Map {
 
 
 func handleGetBorders(w http.ResponseWriter, r *http.Request) BordersResponse {
-	response := BordersResponse{Default: true, Error: "", Map: "{}"}
+	response := BordersResponse{Default: true, Error: ""}
 	cookie := &http.Cookie{
 			Name: "MapCookiesNum",
 			Value: "1",
@@ -98,36 +97,11 @@ func handlePostBorders(w http.ResponseWriter, r *http.Request) BordersResponse {
 	success, response, initial_values := readBorderParams(r)
 
 	if !success {
-		//index_template.ExecuteTemplate(w, "borders.gohtml", response)
 		return response
 	}
 
-	//fmt.Println()
-	//fmt.Println("Borders read successfully? -", success)
-	//fmt.Println(initial_values)
-
 	city_map := generateBorders(initial_values)
 
-/*
-	map_json, err := json.Marshal(city_map)
-	if err != nil {
-                response.Error = "Error while generating map"
-		response.Map = "{}"
-        }
-	//fmt.Println(map_json)
-	response.Map = string(map_json)
-	
-
-	fmt.Println(string(map_json))
-
-	cookie := &http.Cookie{
-			Name: "Map",
-			Value: string(map_json),
-			MaxAge: 3600,
-			SameSite: http.SameSiteNoneMode,
-		}
-	http.SetCookie(w, cookie)
-*/
 	setMapCookies(city_map, w)
 
 	img, success := makeImageString(city_map)

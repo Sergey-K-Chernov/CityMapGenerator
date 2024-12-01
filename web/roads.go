@@ -7,13 +7,11 @@ import (
 	"strconv"
 	gen "chirrwick.com/projects/city/generator"
 	"chirrwick.com/projects/city/city_map"
-	"encoding/json"
 )
 
 type RoadsResponse struct{
 	Default bool
 	Error string
-	Map string
 	Image string
 	MinR float64
 	MaxR float64
@@ -22,7 +20,7 @@ type RoadsResponse struct{
 }
 
 func readRoadsParams(r *http.Request) (bool, RoadsResponse, gen.InitialValuesRoads, city_map.Map) {
-	resp := RoadsResponse{Error: "", Map: "{}"}
+	resp := RoadsResponse{Error: ""}
 	resp.Default = false
 	var city_map city_map.Map
 
@@ -30,28 +28,6 @@ func readRoadsParams(r *http.Request) (bool, RoadsResponse, gen.InitialValuesRoa
 	var initials gen.InitialValuesRoads
 
 	fmt.Println("ReadMap")
-
-	//map_string := r.FormValue("map")
-	//resp.Map = map_string
-
-/*
-	cookie, err := r.Cookie("Map")
-	
-	if err != nil {
-		resp.Error = "Cannot read a cookie with a map"
-		return false, resp, initials, city_map
-	}
-	
-	map_string := cookie.Value
-	map_json := []byte(map_string)
-
-	err = json.Unmarshal(map_json, &city_map)
-	if err != nil {
-		resp.Error = "Cannot get a map from the cookie"
-		return false, resp, initials, city_map
-	}
-	//resp.Default = true
-*/
 
 	city_map = getMapFromCookies(r)
 	fmt.Println("Ok. Read min r")
@@ -111,26 +87,9 @@ func generateRoads(initial_values gen.InitialValuesRoads, cm city_map.Map) city_
 
 
 func handleGetRoads(w http.ResponseWriter, r *http.Request) (RoadsResponse) {
-	response := RoadsResponse{Default: true, Error: "", Map: "{}"}
+	response := RoadsResponse{Default: true, Error: ""}
 	var city_map city_map.Map
 
-/*
-	cookie, err := r.Cookie("Map")
-	if err != nil {
-		response.Error = "Cannot read a cookie with a map"
-		return response
-	}
-
-	map_string := cookie.Value
-	fmt.Println(map_string)
-	map_json := []byte(map_string)
-
-	err = json.Unmarshal(map_json, &city_map)
-	if err != nil {
-		response.Error = "Cannot read a map from the cookie"
-		return response
-	}
-*/
 	city_map = getMapFromCookies(r)
 
 	img, success := makeImageString(city_map)
@@ -160,24 +119,6 @@ func handlePostRoads(w http.ResponseWriter, r *http.Request) RoadsResponse {
 	city_map = generateRoads(initial_values, city_map)
 
 	fmt.Println("Ok")
-
-	map_json, err := json.Marshal(city_map)
-	if err != nil {
-                response.Error = "Error while generating roads"
-		response.Map = "{}"
-        }
-//	fmt.Println(map_json)
-	response.Map = string(map_json)
-	
-/*
-	cookie := &http.Cookie{
-			Name: "Map",
-			Value: string(map_json),
-			MaxAge: 3600,
-			SameSite: http.SameSiteNoneMode,
-		}
-	http.SetCookie(w, cookie)
-*/
 
 	setMapCookies(city_map, w)
 

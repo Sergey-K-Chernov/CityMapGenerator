@@ -49,26 +49,6 @@
 				<div>
 					<button>Generate blocks</button>
 				</div>
-				<!-- This is probably a hack. I am no frontend dev. -->
-				<div class="map">
-					<label for="map">Field below is a serialized map</label>
-				</div>
-				<div class="map">
-					<input name="map" id="map" value="{{ printf "%s" .Map }}"/>
-				</div>
-			</form>
-			</div>
-
-			<div>
-			<form action="/savemap" method="get">
-				<hr/>
-				<!-- This is probably a hack. I am no frontend dev. -->
-				<div class="map">
-					<input name="map" id="map" value="{{ printf "%s" .Map }}"/>
-				</div>
-				<div>
-					<!-- <button>Accept blocks</button> -->
-				</div>
 			</form>
 			</div>
 		</div>
@@ -76,5 +56,15 @@
 			<img src="data:imagr/png;base64,{{.Image}}">
 		</div>
 	</div>
+{{ if ne .Map `` }}
+	<div>
+		<h3>Here's your map in json format:</h3>
+		<hr>
+			<code>
+{{ printf "%s" .Map }}
+			</code>
+		<hr>
+	</div>
+{{ end }}
 </body>
 </html>

@@ -1,6 +1,12 @@
 1. Detect "generate" and "accept" buttons by POST / GET methods
    instead of looking at parameters.
 
+-- done
+
 2. Save the map in a cookie, not in the form.
 
+-- done
+
 3. Save maps in DB
+
+-- todo

@@ -20,24 +20,12 @@ type BlocksResponse struct{
 }
 
 func readBlocksParams(r *http.Request) (bool, BlocksResponse, gen.InitialValuesBlocks, city_map.Map) {
-	resp := BlocksResponse{Error: "", Map: "{}", Default: false}
+	resp := BlocksResponse{Error: "", Map: "", Default: false, Image: ""}
 
 	fmt.Println("Prepare initials for areas")
 	var initials gen.InitialValuesBlocks
 
 	fmt.Println("ReadMap")
-/*
-	map_string := r.FormValue("map")
-	resp.Map = map_string
-	map_json := []byte(map_string)
-	var city_map city_map.Map
-	err := json.Unmarshal(map_json, &city_map)
-	if err != nil {
-		resp.Error = "Cannot get map from you"
-		return false, resp, initials, city_map
-	}
-	resp.Default = true
-*/
 
 	city_map := getMapFromCookies(r)
 
@@ -79,7 +67,7 @@ func generateBlocks(initial_values gen.InitialValuesBlocks, cm city_map.Map) cit
 
 
 func handleGetBlocks(w http.ResponseWriter, r *http.Request) BlocksResponse {
-	response := BlocksResponse{Default: true, Error: "", Map: "{}"}
+	response := BlocksResponse{Default: true, Error: "", Map: "", Image: ""}
 
 	city_map := getMapFromCookies(r)
 
@@ -93,7 +81,6 @@ func handleGetBlocks(w http.ResponseWriter, r *http.Request) BlocksResponse {
 
 
 func handlePostBlocks(w http.ResponseWriter, r *http.Request) BlocksResponse {
-	
 	success, response, initial_values, city_map := readBlocksParams(r)
 
 	if !success {
@@ -110,17 +97,14 @@ func handlePostBlocks(w http.ResponseWriter, r *http.Request) BlocksResponse {
 
 	city_map = generateBlocks(initial_values, city_map)
 
-	fmt.Println("Ok")
-
 	map_json, err := json.Marshal(city_map)
 	if err != nil {
-                response.Error = "Error while generating or serializing areas"
-		response.Map = "{}"
-        }
-	fmt.Println(map_json)
+		response.Error = "Cannot convert map to json"
+		return response
+	}
 	response.Map = string(map_json)
 
-	setMapCookies(city_map, w)
+	fmt.Println("Ok")
 
 	img, success := makeImageString(city_map)
 	if success {
